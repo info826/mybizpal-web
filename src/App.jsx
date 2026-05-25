@@ -37,9 +37,9 @@ const TESTIMONIALS=[
 ];
 
 const PLANS=[
-  {tier:"Starter",price:"149",period:"/ month",featured:false,cta:"Get Started",features:["1 local UK number","1,000 call minutes/mo","1 calendar integration","FAQ handling & booking","Email support"]},
-  {tier:"Pro",price:"349",period:"/ month",featured:true,cta:"Get Started",features:["Everything in Starter","3,000 call minutes/mo","Multi-calendar support","CRM & webhook integrations","WhatsApp automation","Priority support"]},
-  {tier:"Elite",price:"799",period:"/ month",featured:false,cta:"Contact Sales",features:["Everything in Pro","10,000 call minutes/mo","White-label option","Dedicated onboarding","Custom AI persona","SLA guarantee"]},
+  {tier:"Starter",monthly:"149",yearly:"119",featured:false,cta:"Get Started",features:["1 local UK number","1,000 call minutes/mo","1 calendar integration","FAQ handling & booking","Email support"]},
+  {tier:"Pro",monthly:"349",yearly:"279",featured:true,cta:"Get Started",features:["Everything in Starter","3,000 call minutes/mo","Multi-calendar support","CRM & webhook integrations","WhatsApp automation","Priority support"]},
+  {tier:"Elite",monthly:"799",yearly:"639",featured:false,cta:"Contact Sales",features:["Everything in Pro","10,000 call minutes/mo","White-label option","Dedicated onboarding","Custom AI persona","SLA guarantee"]},
 ];
 
 const TICKER=["AI Voice Agent","24/7 Availability","Calendar Booking","Instant Response","WhatsApp Automation","Lead Capture","CRM Integration","Human Handoff","Zero Missed Calls","No Code Setup","Real Time AI","UK Based","AI Voice Agent","24/7 Availability","Calendar Booking","Instant Response","WhatsApp Automation","Lead Capture","CRM Integration","Human Handoff","Zero Missed Calls","No Code Setup","Real Time AI","UK Based"];
@@ -168,8 +168,16 @@ h1,h2,h3{font-family:'Manrope',sans-serif;line-height:1.1;letter-spacing:-0.03em
 .tp-logo{display:flex;align-items:center;gap:8px;text-decoration:none;font-size:16px;font-weight:700;color:#F5F5F7;transition:opacity .2s}
 .tp-logo:hover{opacity:.8}
 .tp-divider{width:1px;height:28px;background:rgba(255,255,255,0.08)}
-.pricing-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;align-items:start}
-.p-card{background:#0d0d1a;border:1px solid rgba(255,255,255,0.08);border-radius:24px;padding:36px;transition:border-color .3s;position:relative;overflow:hidden}
+.billing-toggle{display:flex;align-items:center;justify-content:center;gap:14px;margin-bottom:40px}
+.billing-label{font-size:15px;color:#6E6E73;font-weight:500;cursor:pointer;transition:color .2s;user-select:none}
+.billing-label.active{color:#F5F5F7}
+.toggle-track{width:48px;height:26px;border-radius:100px;background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.13);cursor:pointer;position:relative;transition:background .25s;flex-shrink:0}
+.toggle-track.on{background:linear-gradient(135deg,#00D4FF,#7B2FFF)}
+.toggle-thumb{position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:#fff;transition:transform .25s;box-shadow:0 1px 4px rgba(0,0,0,0.3)}
+.toggle-track.on .toggle-thumb{transform:translateX(22px)}
+.save-badge{display:inline-block;background:rgba(0,255,148,0.1);border:1px solid rgba(0,255,148,0.2);color:#00FF94;font-size:11px;font-weight:700;padding:2px 8px;border-radius:100px;letter-spacing:0.06em;text-transform:uppercase;margin-left:6px;vertical-align:middle}
+.pricing-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;align-items:stretch}
+.p-card{background:#0d0d1a;border:1px solid rgba(255,255,255,0.08);border-radius:24px;padding:36px;transition:border-color .3s;position:relative;overflow:hidden;display:flex;flex-direction:column}
 .p-card.featured{border-color:rgba(0,212,255,0.35);background:linear-gradient(160deg,rgba(0,212,255,0.05),rgba(123,47,255,0.05),#0d0d1a)}
 .p-badge{position:absolute;top:-1px;right:28px;background:linear-gradient(135deg,#00D4FF,#7B2FFF);color:#000;font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;padding:4px 14px;border-radius:0 0 10px 10px}
 .p-tier{font-size:12px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:#6E6E73;margin-bottom:14px}
@@ -177,7 +185,7 @@ h1,h2,h3{font-family:'Manrope',sans-serif;line-height:1.1;letter-spacing:-0.03em
 .p-price sup{font-size:22px;vertical-align:super}
 .p-period{font-size:13px;color:#6E6E73;margin-bottom:28px}
 .p-divider{height:1px;background:rgba(255,255,255,0.08);margin-bottom:28px}
-.p-feats{list-style:none;display:flex;flex-direction:column;gap:11px;margin-bottom:32px}
+.p-feats{list-style:none;display:flex;flex-direction:column;gap:11px;margin-bottom:32px;flex:1}
 .p-feats li{display:flex;align-items:flex-start;gap:10px;font-size:14px;color:#A1A1A6;line-height:1.5}
 .p-check{color:#00FF94;flex-shrink:0}
 .p-btn-outline{width:100%;padding:13px;border-radius:100px;background:transparent;color:#F5F5F7;border:1px solid rgba(255,255,255,0.13);font-family:'Manrope',sans-serif;font-size:14px;font-weight:600;cursor:pointer;transition:all .2s;display:block;text-decoration:none;text-align:center}
@@ -349,6 +357,7 @@ export default function App(){
   const [scrolled,setScrolled]=useState(false);
   const [videoPlaying,setVideoPlaying]=useState(false);
   const [menuOpen,setMenuOpen]=useState(false);
+  const [billing,setBilling]=useState("monthly");
   useEffect(()=>{
     const h=()=>setScrolled(window.scrollY>20);
     window.addEventListener("scroll",h);return()=>window.removeEventListener("scroll",h);
@@ -487,21 +496,34 @@ export default function App(){
       </section>
 
       <section className="section" id="pricing">
-        <div className="mb64" style={{textAlign:"center"}}><div className="eyebrow">Pricing</div><h2 className="section-h">Simple, transparent pricing.</h2><p className="section-sub" style={{margin:"0 auto"}}>No hidden fees. Cancel any time. Pays for itself in one booking.</p></div>
+        <div className="mb64" style={{textAlign:"center"}}>
+          <div className="eyebrow">Pricing</div>
+          <h2 className="section-h">Simple, transparent pricing.</h2>
+          <p className="section-sub" style={{margin:"0 auto 32px"}}>No hidden fees. Cancel any time. Pays for itself in one booking.</p>
+          <div className="billing-toggle">
+            <span className={"billing-label"+(billing==="monthly"?" active":"")} onClick={()=>setBilling("monthly")}>Monthly</span>
+            <div className={"toggle-track"+(billing==="yearly"?" on":"")} onClick={()=>setBilling(billing==="monthly"?"yearly":"monthly")}>
+              <div className="toggle-thumb"/>
+            </div>
+            <span className={"billing-label"+(billing==="yearly"?" active":"")} onClick={()=>setBilling("yearly")}>
+              Yearly<span className="save-badge">Save 20%</span>
+            </span>
+          </div>
+        </div>
         <div className="pricing-grid">
           {PLANS.map(p=>(
             <div className={"p-card"+(p.featured?" featured":"")} key={p.tier}>
               {p.featured&&<div className="p-badge">Most Popular</div>}
               <div className="p-tier">{p.tier}</div>
-              <div className="p-price"><sup>£</sup>{p.price}</div>
-              <div className="p-period">{p.period}</div>
+              <div className="p-price"><sup>£</sup>{billing==="yearly"?p.yearly:p.monthly}</div>
+              <div className="p-period">{billing==="yearly"?"/ mo, billed annually":"/ month"}</div>
               <div className="p-divider"/>
               <ul className="p-feats">{p.features.map(f=><li key={f}><span className="p-check">✓</span>{f}</li>)}</ul>
               <a href="#demo" className={p.featured?"p-btn-grad":"p-btn-outline"}>{p.cta}</a>
             </div>
           ))}
         </div>
-        <p style={{textAlign:"center",marginTop:24,fontSize:13,color:"#6E6E73"}}>Prices in GBP. Save 20% on annual plans.</p>
+        <p style={{textAlign:"center",marginTop:24,fontSize:13,color:"#6E6E73"}}>Prices in GBP. Annual plans billed as a single payment.</p>
       </section>
 
       <section className="section" id="faq">
