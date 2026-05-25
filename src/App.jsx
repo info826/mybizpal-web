@@ -53,10 +53,10 @@ h1,h2,h3{font-family:'Manrope',sans-serif;line-height:1.1;letter-spacing:-0.03em
 ::selection{background:#00D4FF;color:#000}
 ::-webkit-scrollbar{width:3px}::-webkit-scrollbar-track{background:#000}::-webkit-scrollbar-thumb{background:#333;border-radius:2px}
 .grad-text{background:linear-gradient(135deg,#00D4FF,#9B5FFF);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
-.nav{position:fixed;top:0;left:0;right:0;z-index:200;height:60px;padding:0 48px;display:flex;align-items:center;justify-content:space-between;transition:all .4s}
+.nav{position:fixed;top:0;left:0;right:0;z-index:200;height:120px;padding:0 48px;display:flex;align-items:center;justify-content:space-between;transition:all .4s}
 .nav.scrolled{background:rgba(0,0,0,0.75);backdrop-filter:blur(24px);border-bottom:1px solid rgba(255,255,255,0.08)}
 .nav-logo{display:flex;align-items:center;text-decoration:none}
-.nav-logo img{height:44px;width:auto}
+.nav-logo img{height:100px;width:auto}
 .nav-links{display:flex;align-items:center;gap:28px;list-style:none}
 .nav-links a{color:#A1A1A6;text-decoration:none;font-size:14px;font-weight:500;transition:color .2s}
 .nav-links a:hover{color:#F5F5F7}
@@ -467,7 +467,7 @@ export default function App(){
       <footer className="footer">
         <div className="footer-grid">
           <div>
-            <a className="nav-logo" href="#" style={{display:"inline-flex",marginBottom:12}}><img src={LOGO_ICON} alt="MyBizPal" style={{height:'72px',width:'auto'}}/></a>
+            <a className="nav-logo" href="#" style={{display:"inline-flex",marginBottom:12}}><img src={LOGO_ICON} alt="MyBizPal" style={{height:'432px',width:'auto'}}/></a>
             <p className="footer-brand-desc">24/7 AI voice agents and automation for growing SMEs. Never miss a call, booking, or lead again.</p>
           </div>
           <div><div className="footer-col-title">Product</div><ul className="footer-links"><li><a href="#how-it-works">How It Works</a></li><li><a href="#features">Features</a></li><li><a href="#pricing">Pricing</a></li><li><a href="#demo">Book a Demo</a></li></ul></div>
