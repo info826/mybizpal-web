@@ -213,7 +213,7 @@ h1,h2,h3{font-family:'Manrope',sans-serif;line-height:1.1;letter-spacing:-0.03em
 .mobile-menu-divider{height:1px;background:rgba(255,255,255,0.08);margin:8px 0}
 .mobile-menu-cta{background:linear-gradient(135deg,#00D4FF,#7B2FFF,#4060FF);color:#000!important;font-weight:700!important;text-align:center;border-radius:100px!important}
 @media(max-width:960px){
-  .nav{padding:0 20px;height:140px}.nav-links{display:none}.nav-right{display:none}.hamburger{display:flex}
+  .nav{padding:0 20px 0 8px;height:140px}.nav-links{display:none}.nav-right{display:none}.hamburger{display:flex}
   .nav-logo img{height:168px}
   .mobile-menu{top:140px}
   .hero-ctas{flex-direction:column;align-items:stretch}.hero-ctas .btn-primary,.hero-ctas .btn-outline{width:100%;justify-content:center}
