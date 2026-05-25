@@ -140,11 +140,11 @@ h1,h2,h3{font-family:'Manrope',sans-serif;line-height:1.1;letter-spacing:-0.03em
 .form-input::placeholder{color:#6E6E73}
 .form-input.err{border-color:rgba(255,69,58,0.6)}
 .phone-wrap{display:flex;gap:8px}
-.country-select{position:relative;flex-shrink:0}
-.country-trigger{width:100%;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:13px 12px;color:#F5F5F7;font-family:'Manrope',sans-serif;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:6px;transition:all .2s;user-select:none;white-space:nowrap}
+.country-select{position:relative;flex-shrink:0;width:120px}
+.country-trigger{width:120px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:13px 12px;color:#F5F5F7;font-family:'Manrope',sans-serif;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:4px;transition:all .2s;user-select:none;white-space:nowrap}
 .country-trigger:hover,.country-trigger.open{border-color:rgba(0,212,255,0.5);background:rgba(0,212,255,0.04)}
-.country-dropdown{position:absolute;top:calc(100% + 4px);left:0;min-width:200px;background:#111126;border:1px solid rgba(255,255,255,0.12);border-radius:12px;overflow:hidden;overflow-y:auto;max-height:220px;z-index:300;box-shadow:0 8px 24px rgba(0,0,0,0.5)}
-.country-option{padding:10px 14px;font-size:13px;color:#F5F5F7;cursor:pointer;transition:background .15s}
+.country-dropdown{position:absolute;top:calc(100% + 4px);left:0;width:200px;background:#111126;border:1px solid rgba(255,255,255,0.12);border-radius:12px;overflow-x:hidden;overflow-y:auto;max-height:220px;z-index:300;box-shadow:0 8px 24px rgba(0,0,0,0.5)}
+.country-option{padding:10px 14px;font-size:13px;color:#F5F5F7;cursor:pointer;transition:background .15s;white-space:nowrap}
 .country-option:hover{background:rgba(0,212,255,0.1)}
 .country-option.active{background:rgba(0,212,255,0.08);color:#00D4FF}
 .field-err{font-size:11px;color:#FF453A;margin-top:4px}
@@ -229,6 +229,7 @@ function CountrySelect({value, onChange}){
   const [open,setOpen]=useState(false);
   const ref=useRef(null);
   const selected=COUNTRIES.find(c=>c.code===value)||COUNTRIES[0];
+  const flag=selected.name.split(" ")[0];
   useEffect(()=>{
     const h=(e)=>{if(ref.current&&!ref.current.contains(e.target))setOpen(false)};
     document.addEventListener("mousedown",h);
@@ -237,8 +238,8 @@ function CountrySelect({value, onChange}){
   return(
     <div className="country-select" ref={ref}>
       <div className={"country-trigger"+(open?" open":"")} onClick={()=>setOpen(!open)}>
-        <span>{selected.name} {selected.code}</span>
-        <span style={{fontSize:9,color:"#6E6E73",marginLeft:2}}>▼</span>
+        <span>{flag} {value}</span>
+        <span style={{fontSize:9,color:"#6E6E73"}}>▼</span>
       </div>
       {open&&(
         <div className="country-dropdown">
