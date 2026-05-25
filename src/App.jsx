@@ -467,7 +467,7 @@ export default function App(){
       <footer className="footer">
         <div className="footer-grid">
           <div>
-            <a className="nav-logo" href="#" style={{display:"inline-flex",marginBottom:12}}><img src={LOGO_ICON} alt="MyBizPal" style={{height:36}}/></a>
+            <a className="nav-logo" href="#" style={{display:"inline-flex",marginBottom:12}}><img src={LOGO_ICON} alt="MyBizPal" style={{height:'48px',width:'auto'}}/></a>
             <p className="footer-brand-desc">24/7 AI voice agents and automation for growing SMEs. Never miss a call, booking, or lead again.</p>
           </div>
           <div><div className="footer-col-title">Product</div><ul className="footer-links"><li><a href="#how-it-works">How It Works</a></li><li><a href="#features">Features</a></li><li><a href="#pricing">Pricing</a></li><li><a href="#demo">Book a Demo</a></li></ul></div>
