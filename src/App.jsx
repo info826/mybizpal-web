@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from "react";
+﻿import { useState, useEffect, useRef } from "react";
 
 const LOGO_FULL = "/logo-full.png";
 const LOGO_ICON = "/logo-icon.png";
@@ -140,9 +140,13 @@ h1,h2,h3{font-family:'Manrope',sans-serif;line-height:1.1;letter-spacing:-0.03em
 .form-input::placeholder{color:#6E6E73}
 .form-input.err{border-color:rgba(255,69,58,0.6)}
 .phone-wrap{display:flex;gap:8px}
-.phone-code{width:110px;flex-shrink:0;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:13px 12px;color:#F5F5F7;font-family:'Manrope',sans-serif;font-size:14px;outline:none;transition:all .2s;appearance:none;background-image:url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1L5 5L9 1' stroke='%236E6E73' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;padding-right:28px;cursor:pointer}
-.phone-code:focus{border-color:rgba(0,212,255,0.5)}
-.phone-code option{background:#1a1a2e;color:#F5F5F7}
+.country-select{position:relative;flex-shrink:0}
+.country-trigger{width:100%;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:13px 12px;color:#F5F5F7;font-family:'Manrope',sans-serif;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:6px;transition:all .2s;user-select:none;white-space:nowrap}
+.country-trigger:hover,.country-trigger.open{border-color:rgba(0,212,255,0.5);background:rgba(0,212,255,0.04)}
+.country-dropdown{position:absolute;top:calc(100% + 4px);left:0;min-width:200px;background:#111126;border:1px solid rgba(255,255,255,0.12);border-radius:12px;overflow:hidden;overflow-y:auto;max-height:220px;z-index:300;box-shadow:0 8px 24px rgba(0,0,0,0.5)}
+.country-option{padding:10px 14px;font-size:13px;color:#F5F5F7;cursor:pointer;transition:background .15s}
+.country-option:hover{background:rgba(0,212,255,0.1)}
+.country-option.active{background:rgba(0,212,255,0.08);color:#00D4FF}
 .field-err{font-size:11px;color:#FF453A;margin-top:4px}
 .form-submit{width:100%;background:linear-gradient(135deg,#00D4FF,#7B2FFF,#4060FF);color:#000;border:none;padding:15px;border-radius:100px;font-family:'Manrope',sans-serif;font-size:15px;font-weight:700;cursor:pointer;transition:all .25s;margin-top:8px;display:flex;align-items:center;justify-content:center;gap:8px}
 .form-submit:hover{opacity:.88;box-shadow:0 8px 30px rgba(0,212,255,0.3);transform:translateY(-1px)}
@@ -221,6 +225,35 @@ function FAQ({q,a}){
   );
 }
 
+function CountrySelect({value, onChange}){
+  const [open,setOpen]=useState(false);
+  const ref=useRef(null);
+  const selected=COUNTRIES.find(c=>c.code===value)||COUNTRIES[0];
+  useEffect(()=>{
+    const h=(e)=>{if(ref.current&&!ref.current.contains(e.target))setOpen(false)};
+    document.addEventListener("mousedown",h);
+    return()=>document.removeEventListener("mousedown",h);
+  },[]);
+  return(
+    <div className="country-select" ref={ref}>
+      <div className={"country-trigger"+(open?" open":"")} onClick={()=>setOpen(!open)}>
+        <span>{selected.name} {selected.code}</span>
+        <span style={{fontSize:9,color:"#6E6E73",marginLeft:2}}>▼</span>
+      </div>
+      {open&&(
+        <div className="country-dropdown">
+          {COUNTRIES.map((c,i)=>(
+            <div key={i} className={"country-option"+(c.code===value&&c.name===selected.name?" active":"")}
+              onClick={()=>{onChange(c.code);setOpen(false);}}>
+              {c.name} {c.code}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function DemoForm(){
   const [f,setF]=useState({firstName:"",lastName:"",email:"",countryCode:"+44",phone:"",message:""});
   const [errs,setErrs]=useState({});
@@ -284,9 +317,7 @@ function DemoForm(){
       <div className="form-group">
         <label className="form-label">Phone Number <span>*</span></label>
         <div className="phone-wrap">
-          <select className="phone-code" value={f.countryCode} onChange={e=>ch("countryCode",e.target.value)}>
-            {COUNTRIES.map((c,i)=><option key={i} value={c.code}>{c.name} {c.code}</option>)}
-          </select>
+          <CountrySelect value={f.countryCode} onChange={v=>ch("countryCode",v)}/>
           <input className={"form-input"+(errs.phone?" err":"")} placeholder="7700 000000" value={f.phone} onChange={e=>ch("phone",e.target.value)} style={{flex:1}}/>
         </div>
         {errs.phone&&<div className="field-err">{errs.phone}</div>}
@@ -436,7 +467,7 @@ export default function App(){
             <div className={"p-card"+(p.featured?" featured":"")} key={p.tier}>
               {p.featured&&<div className="p-badge">Most Popular</div>}
               <div className="p-tier">{p.tier}</div>
-              <div className="p-price"><sup>$</sup>{p.price}</div>
+              <div className="p-price"><sup>£</sup>{p.price}</div>
               <div className="p-period">{p.period}</div>
               <div className="p-divider"/>
               <ul className="p-feats">{p.features.map(f=><li key={f}><span className="p-check">✓</span>{f}</li>)}</ul>
@@ -444,7 +475,7 @@ export default function App(){
             </div>
           ))}
         </div>
-        <p style={{textAlign:"center",marginTop:24,fontSize:13,color:"#6E6E73"}}>Prices in USD. UK businesses billed in GBP. Save 20% on annual plans.</p>
+        <p style={{textAlign:"center",marginTop:24,fontSize:13,color:"#6E6E73"}}>Prices in GBP. Save 20% on annual plans.</p>
       </section>
 
       <section className="section" id="faq">
