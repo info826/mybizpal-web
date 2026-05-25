@@ -205,9 +205,18 @@ h1,h2,h3{font-family:'Manrope',sans-serif;line-height:1.1;letter-spacing:-0.03em
 .footer-socials{display:flex;gap:10px}
 .social-icon{width:36px;height:36px;border-radius:10px;border:1px solid rgba(255,255,255,0.08);background:rgba(255,255,255,0.04);display:flex;align-items:center;justify-content:center;color:#6E6E73;text-decoration:none;font-size:14px;transition:all .2s}
 .social-icon:hover{border-color:rgba(0,212,255,0.4);color:#00D4FF}
+.hamburger{display:none;background:none;border:none;color:#F5F5F7;font-size:26px;cursor:pointer;padding:8px;line-height:1;flex-shrink:0;align-items:center;justify-content:center}
+.mobile-menu{position:fixed;top:80px;left:0;right:0;z-index:190;background:rgba(5,5,15,0.97);backdrop-filter:blur(24px);border-bottom:1px solid rgba(255,255,255,0.08);padding:16px 20px 24px;display:flex;flex-direction:column;gap:2px;animation:menuSlide .2s ease}
+@keyframes menuSlide{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
+.mobile-menu a{color:#A1A1A6;text-decoration:none;font-size:16px;font-weight:500;padding:13px 16px;border-radius:12px;display:block;transition:all .2s}
+.mobile-menu a:hover{color:#F5F5F7;background:rgba(255,255,255,0.05)}
+.mobile-menu-divider{height:1px;background:rgba(255,255,255,0.08);margin:8px 0}
+.mobile-menu-cta{background:linear-gradient(135deg,#00D4FF,#7B2FFF,#4060FF);color:#000!important;font-weight:700!important;text-align:center;border-radius:100px!important}
 @media(max-width:960px){
-  .nav{padding:0 20px}.nav-links{display:none}
-  .stats-bar{flex-wrap:wrap}.stat-item{border-right:none;border-bottom:1px solid rgba(255,255,255,0.08);flex:1 0 50%}
+  .nav{padding:0 20px;height:80px}.nav-links{display:none}.nav-right{display:none}.hamburger{display:flex}
+  .nav-logo img{height:56px}
+  .hero-ctas{flex-direction:column;align-items:stretch}.hero-ctas .btn-primary,.hero-ctas .btn-outline{width:100%;justify-content:center}
+  .stats-bar{display:grid;grid-template-columns:1fr 1fr}.stat-item{flex:none;border-right:none;border-bottom:1px solid rgba(255,255,255,0.08)}.stat-item:nth-child(odd){border-right:1px solid rgba(255,255,255,0.08)}.stat-item:nth-last-child(-n+2){border-bottom:none}
   .steps-wrap,.feat-grid,.testi-grid,.pricing-grid{grid-template-columns:1fr}
   .demo-inner{grid-template-columns:1fr}.demo-left{border-right:none;border-bottom:1px solid rgba(255,255,255,0.08);padding:40px 28px}.demo-right{padding:40px 28px}
   .form-row{grid-template-columns:1fr}.footer-grid{grid-template-columns:1fr 1fr}
@@ -338,6 +347,7 @@ function DemoForm(){
 export default function App(){
   const [scrolled,setScrolled]=useState(false);
   const [videoPlaying,setVideoPlaying]=useState(false);
+  const [menuOpen,setMenuOpen]=useState(false);
   useEffect(()=>{
     const h=()=>setScrolled(window.scrollY>20);
     window.addEventListener("scroll",h);return()=>window.removeEventListener("scroll",h);
@@ -359,7 +369,21 @@ export default function App(){
           <a className="btn-ghost" href="#demo">Sign in</a>
           <a className="btn-pill" href="#demo">Book a Demo →</a>
         </div>
+        <button className="hamburger" onClick={()=>setMenuOpen(!menuOpen)} aria-label="Menu">
+          {menuOpen?"✕":"☰"}
+        </button>
       </nav>
+      {menuOpen&&(
+        <div className="mobile-menu">
+          <a href="#how-it-works" onClick={()=>setMenuOpen(false)}>How It Works</a>
+          <a href="#features" onClick={()=>setMenuOpen(false)}>Features</a>
+          <a href="#demo" onClick={()=>setMenuOpen(false)}>Demo</a>
+          <a href="#pricing" onClick={()=>setMenuOpen(false)}>Pricing</a>
+          <a href="#faq" onClick={()=>setMenuOpen(false)}>FAQ</a>
+          <div className="mobile-menu-divider"/>
+          <a href="#demo" className="mobile-menu-cta" onClick={()=>setMenuOpen(false)}>Book a Demo →</a>
+        </div>
+      )}
 
       <section className="hero">
         <div className="hero-glow"/><div className="hero-grid"/>
