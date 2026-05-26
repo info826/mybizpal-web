@@ -36,10 +36,16 @@ const TESTIMONIALS=[
   {text:"Easiest setup I have done. Paid for itself within the first week. If you run an SME and miss calls, you need this now.",name:"Chris D.",role:"Agency Owner, Manchester",photo:"/Chris.D.png"},
 ];
 
+const PRICES={
+  starter:{setup:"price_1TbRiUEeQsMUUSove7Zk2xI4",monthly:"price_1TbRkNEeQsMUUSovudq4xJVy",annual:"price_1TbRpTEeQsMUUSovR6swIWaJ"},
+  pro:    {setup:"price_1TbRjMEeQsMUUSovK2cPJHxc",monthly:"price_1TbRkvEeQsMUUSovAQatpRDB",annual:"price_1TbRpwEeQsMUUSovcxJ5MDNi"},
+  elite:  {setup:"price_1TbRjhEeQsMUUSovnIb8Qzbi",monthly:"price_1TbRluEeQsMUUSovw7IX1uCE",annual:"price_1TbRsVEeQsMUUSovSx7v82k2"},
+};
+
 const PLANS=[
-  {tier:"Starter",monthly:"149",yearly:"119",featured:false,cta:"Get Started",features:["1 local UK number","1,000 call minutes/mo","1 calendar integration","FAQ handling & booking","Email support"]},
-  {tier:"Pro",monthly:"349",yearly:"279",featured:true,cta:"Get Started",features:["Everything in Starter","3,000 call minutes/mo","Multi-calendar support","CRM & webhook integrations","WhatsApp automation","Priority support"]},
-  {tier:"Elite",monthly:"799",yearly:"639",featured:false,cta:"Contact Sales",features:["Everything in Pro","10,000 call minutes/mo","White-label option","Dedicated onboarding","Custom AI persona","SLA guarantee"]},
+  {key:"starter",tier:"Starter",setup:"399",monthly:"149",yearly:"119",featured:false,cta:"Get Started",features:["1 local UK number","1,000 call minutes/mo","1 calendar integration","FAQ handling & booking","Email support"]},
+  {key:"pro",tier:"Pro",setup:"799",monthly:"349",yearly:"279",featured:true,cta:"Get Started",features:["Everything in Starter","3,000 call minutes/mo","Multi-calendar support","CRM & webhook integrations","WhatsApp automation","Priority support"]},
+  {key:"elite",tier:"Elite",setup:"1,499",monthly:"799",yearly:"639",featured:false,cta:"Contact Sales",features:["Everything in Pro","10,000 call minutes/mo","White-label option","Dedicated onboarding","Custom AI persona","SLA guarantee"]},
 ];
 
 const TICKER=["AI Voice Agent","24/7 Availability","Calendar Booking","Instant Response","WhatsApp Automation","Lead Capture","CRM Integration","Human Handoff","Zero Missed Calls","No Code Setup","Real Time AI","UK Based","AI Voice Agent","24/7 Availability","Calendar Booking","Instant Response","WhatsApp Automation","Lead Capture","CRM Integration","Human Handoff","Zero Missed Calls","No Code Setup","Real Time AI","UK Based"];
@@ -214,6 +220,8 @@ h1,h2,h3{font-family:'Manrope',sans-serif;line-height:1.1;letter-spacing:-0.03em
 .footer-socials{display:flex;gap:10px}
 .social-icon{width:36px;height:36px;border-radius:10px;border:1px solid rgba(255,255,255,0.08);background:rgba(255,255,255,0.04);display:flex;align-items:center;justify-content:center;color:#6E6E73;text-decoration:none;font-size:14px;transition:all .2s}
 .social-icon:hover{border-color:rgba(0,212,255,0.4);color:#00D4FF}
+.checkout-toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#1a0a0a;border:1px solid rgba(255,69,58,0.4);color:#FF453A;padding:12px 20px;border-radius:12px;font-size:14px;z-index:999;max-width:420px;text-align:center;box-shadow:0 8px 24px rgba(0,0,0,0.5)}
+.setup-fee{display:inline-block;background:rgba(0,212,255,0.08);border:1px solid rgba(0,212,255,0.2);color:#00D4FF;font-size:11px;font-weight:700;padding:3px 10px;border-radius:100px;letter-spacing:0.06em;text-transform:uppercase;margin-bottom:16px}
 .hamburger{display:none;background:none;border:none;color:#F5F5F7;font-size:26px;cursor:pointer;padding:8px;line-height:1;flex-shrink:0;align-items:center;justify-content:center}
 .mobile-menu{position:fixed;top:80px;left:0;right:0;z-index:190;background:rgba(5,5,15,0.97);backdrop-filter:blur(24px);border-bottom:1px solid rgba(255,255,255,0.08);padding:16px 20px 24px;display:flex;flex-direction:column;gap:2px;animation:menuSlide .2s ease}
 @keyframes menuSlide{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
@@ -359,6 +367,27 @@ export default function App(){
   const [videoPlaying,setVideoPlaying]=useState(false);
   const [menuOpen,setMenuOpen]=useState(false);
   const [billing,setBilling]=useState("monthly");
+  const [checkoutLoading,setCheckoutLoading]=useState(null);
+  const [checkoutError,setCheckoutError]=useState(null);
+
+  const handleCheckout=async(planKey,billingCycle)=>{
+    if(planKey==="elite"){window.location.href="mailto:info@mybizpal.ai";return;}
+    setCheckoutLoading(planKey);setCheckoutError(null);
+    try{
+      const priceId=PRICES[planKey][billingCycle==="yearly"?"annual":"monthly"];
+      const setupPriceId=PRICES[planKey].setup;
+      const res=await fetch(`${API_URL}/api/create-checkout-session`,{
+        method:"POST",headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({plan:planKey,billingCycle,priceId,setupPriceId}),
+      });
+      if(!res.ok)throw new Error("Failed to create checkout session");
+      const{url}=await res.json();
+      window.location.href=url;
+    }catch(err){
+      setCheckoutError("Something went wrong. Please try again or email info@mybizpal.ai");
+      setCheckoutLoading(null);
+    }
+  };
   useEffect(()=>{
     const h=()=>setScrolled(window.scrollY>20);
     window.addEventListener("scroll",h);return()=>window.removeEventListener("scroll",h);
@@ -518,9 +547,17 @@ export default function App(){
               <div className="p-tier">{p.tier}</div>
               <div className="p-price"><sup>£</sup>{billing==="yearly"?p.yearly:p.monthly}</div>
               <div className="p-period">{billing==="yearly"?"/ mo, billed annually":"/ month"}</div>
+              <div className="setup-fee">+ £{p.setup} one-time setup</div>
               <div className="p-divider"/>
               <ul className="p-feats">{p.features.map(f=><li key={f}><span className="p-check">✓</span>{f}</li>)}</ul>
-              <a href="#demo" className={p.featured?"p-btn-grad":"p-btn-outline"}>{p.cta}</a>
+              <button
+                className={p.featured?"p-btn-grad":"p-btn-outline"}
+                onClick={()=>handleCheckout(p.key,billing)}
+                disabled={checkoutLoading===p.key}
+                style={{cursor:checkoutLoading===p.key?"wait":"pointer"}}
+              >
+                {checkoutLoading===p.key?"Loading…":p.cta}
+              </button>
             </div>
           ))}
         </div>
@@ -543,6 +580,12 @@ export default function App(){
           </div>
         </div>
       </section>
+
+      {checkoutError&&(
+        <div className="checkout-toast" onClick={()=>setCheckoutError(null)}>
+          ⚠ {checkoutError}
+        </div>
+      )}
 
       <footer className="footer">
         <div className="footer-grid">
