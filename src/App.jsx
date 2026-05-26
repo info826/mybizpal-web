@@ -45,7 +45,7 @@ const PRICES={
 const PLANS=[
   {key:"starter",tier:"Starter",setup:"399",monthly:"149",yearly:"119",featured:false,cta:"Get Started",features:["1 local UK number","1,000 call minutes/mo","1 calendar integration","FAQ handling & booking","Email support"]},
   {key:"pro",tier:"Pro",setup:"799",monthly:"349",yearly:"279",featured:true,cta:"Get Started",features:["Everything in Starter","3,000 call minutes/mo","Multi-calendar support","CRM & webhook integrations","WhatsApp automation","Priority support"]},
-  {key:"elite",tier:"Elite",setup:"1,499",monthly:"799",yearly:"639",featured:false,cta:"Contact Sales",features:["Everything in Pro","10,000 call minutes/mo","White-label option","Dedicated onboarding","Custom AI persona","SLA guarantee"]},
+  {key:"elite",tier:"Elite",setup:"1,499",monthly:"799",yearly:"639",featured:false,cta:"Get Started",features:["Everything in Pro","10,000 call minutes/mo","White-label option","Dedicated onboarding","Custom AI persona","SLA guarantee"]},
 ];
 
 const TICKER=["AI Voice Agent","24/7 Availability","Calendar Booking","Instant Response","WhatsApp Automation","Lead Capture","CRM Integration","Human Handoff","Zero Missed Calls","No Code Setup","Real Time AI","UK Based","AI Voice Agent","24/7 Availability","Calendar Booking","Instant Response","WhatsApp Automation","Lead Capture","CRM Integration","Human Handoff","Zero Missed Calls","No Code Setup","Real Time AI","UK Based"];
@@ -371,7 +371,6 @@ export default function App(){
   const [checkoutError,setCheckoutError]=useState(null);
 
   const handleCheckout=async(planKey,billingCycle)=>{
-    if(planKey==="elite"){window.location.href="mailto:info@mybizpal.ai";return;}
     setCheckoutLoading(planKey);setCheckoutError(null);
     try{
       const priceId=PRICES[planKey][billingCycle==="yearly"?"annual":"monthly"];
