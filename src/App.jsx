@@ -302,9 +302,9 @@ function DemoForm(){
     if(Object.keys(e).length){setErrs(e);return;}
     setErrs({});setLoading(true);
     try{
-      const res=await fetch(`${API_URL}/api/demo-request`,{
+      const res=await fetch("https://mybizpal-n8n.onrender.com/webhook/lead-form",{
         method:"POST",headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({firstName:f.firstName,lastName:f.lastName,email:f.email,phone:`${f.countryCode}${f.phone}`,message:f.message}),
+        body:JSON.stringify({name:`${f.firstName} ${f.lastName}`,email:f.email,phone:`${f.countryCode}${f.phone}`,business:f.message}),
       });
       if(!res.ok)throw new Error("API error");
       setDone(true);
