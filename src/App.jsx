@@ -31,9 +31,9 @@ const FAQS=[
 ];
 
 const TESTIMONIALS=[
-  {text:"MyBizPal instantly started booking leads after hours. We doubled appointments in the first month without hiring anyone.",name:"D. Soden",role:"Clinic Owner, London",init:"DS"},
-  {text:"The AI sounds completely natural. Our team can now focus on in-person clients instead of answering the same questions by phone.",name:"A. Patel",role:"Home Services, Birmingham",init:"AP"},
-  {text:"Easiest setup I have done. Paid for itself within the first week. If you run an SME and miss calls, you need this now.",name:"Chris D.",role:"Agency Owner, Manchester",init:"CD"},
+  {text:"MyBizPal instantly started booking leads after hours. We doubled appointments in the first month without hiring anyone.",name:"D. Soden",role:"Clinic Owner, London",photo:"/D.Soden.png"},
+  {text:"The AI sounds completely natural. Our team can now focus on in-person clients instead of answering the same questions by phone.",name:"A. Patel",role:"Home Services, Birmingham",photo:"/A.Patel.png"},
+  {text:"Easiest setup I have done. Paid for itself within the first week. If you run an SME and miss calls, you need this now.",name:"Chris D.",role:"Agency Owner, Manchester",photo:"/Chris.D.png"},
 ];
 
 const PLANS=[
@@ -161,7 +161,8 @@ h1,h2,h3{font-family:'Manrope',sans-serif;line-height:1.1;letter-spacing:-0.03em
 .quote-mark{font-size:40px;font-weight:800;color:rgba(0,212,255,0.2);line-height:1;margin-bottom:12px}
 .testi-text{font-size:15px;color:#A1A1A6;line-height:1.7;font-weight:300;margin-bottom:24px}
 .testi-author{display:flex;align-items:center;gap:12px}
-.testi-avatar{width:38px;height:38px;border-radius:50%;flex-shrink:0;background:linear-gradient(135deg,#00D4FF,#7B2FFF);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;color:#000}
+.testi-avatar{width:48px;height:48px;border-radius:50%;flex-shrink:0;overflow:hidden;border:2px solid rgba(0,212,255,0.3)}
+.testi-avatar img{width:100%;height:100%;object-fit:cover;display:block}
 .testi-name{font-size:14px;font-weight:600}
 .testi-role{font-size:12px;color:#6E6E73}
 .tp-strip{display:flex;align-items:center;justify-content:center;gap:16px;margin-top:48px;padding:20px 32px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:16px;flex-wrap:wrap}
@@ -479,7 +480,7 @@ export default function App(){
               <div className="stars">{[...Array(5)].map((_,i)=><span className="star" key={i}>★</span>)}</div>
               <div className="quote-mark">"</div>
               <p className="testi-text">{t.text}</p>
-              <div className="testi-author"><div className="testi-avatar">{t.init}</div><div><div className="testi-name">{t.name}</div><div className="testi-role">{t.role}</div></div></div>
+              <div className="testi-author"><div className="testi-avatar"><img src={t.photo} alt={t.name}/></div><div><div className="testi-name">{t.name}</div><div className="testi-role">{t.role}</div></div></div>
             </div>
           ))}
         </div>
