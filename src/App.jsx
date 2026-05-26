@@ -109,7 +109,7 @@ h1,h2,h3{font-family:'Manrope',sans-serif;line-height:1.1;letter-spacing:-0.03em
 .steps-wrap{display:grid;grid-template-columns:repeat(3,1fr);gap:2px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.08);border-radius:24px;overflow:hidden}
 .step{background:#0d0d1a;padding:52px 40px;transition:background .3s;position:relative;overflow:hidden}
 .step:hover{background:#111126}
-.step-num{font-size:80px;font-weight:800;color:rgba(255,255,255,0.04);line-height:1;margin-bottom:28px;letter-spacing:-0.06em}
+.step-num{font-size:80px;font-weight:800;line-height:1;margin-bottom:28px;letter-spacing:-0.06em;background:linear-gradient(135deg,#00D4FF,#7B2FFF);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;opacity:0.55}
 .step-icon{width:48px;height:48px;border-radius:14px;background:linear-gradient(135deg,rgba(0,212,255,0.12),rgba(123,47,255,0.12));border:1px solid rgba(0,212,255,0.2);display:flex;align-items:center;justify-content:center;font-size:22px;margin-bottom:22px}
 .step-title{font-size:21px;font-weight:700;margin-bottom:12px;letter-spacing:-0.02em}
 .step-desc{font-size:15px;color:#A1A1A6;line-height:1.7;font-weight:300}
