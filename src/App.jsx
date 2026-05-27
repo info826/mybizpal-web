@@ -420,6 +420,7 @@ export default function App(){
           <a href="#pricing" onClick={()=>setMenuOpen(false)}>Pricing</a>
           <a href="#faq" onClick={()=>setMenuOpen(false)}>FAQ</a>
           <div className="mobile-menu-divider"/>
+          <a href="#demo" onClick={()=>setMenuOpen(false)}>Sign in</a>
           <a href="#demo" className="mobile-menu-cta" onClick={()=>setMenuOpen(false)}>Book a Demo →</a>
         </div>
       )}
