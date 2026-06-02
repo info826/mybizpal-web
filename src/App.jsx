@@ -408,7 +408,7 @@ h1,h2,h3{font-family:'Manrope',sans-serif;line-height:1.1;letter-spacing:-0.03em
 .sofi-fab{position:fixed;z-index:500;display:flex;flex-direction:column;align-items:flex-end;gap:10px;touch-action:none;user-select:none}
 .sofi-fab-btn{width:58px;height:58px;border-radius:50%;background:#0d0d1a;border:1.5px solid rgba(0,212,255,0.5);cursor:grab;display:flex;align-items:center;justify-content:center;box-shadow:0 6px 28px rgba(0,212,255,0.15);position:relative;transition:box-shadow .2s}
 .sofi-fab-btn:active{cursor:grabbing}
-.sofi-fab-btn:hover{box-shadow:0 10px 36px rgba(0,212,255,0.25);border-color:rgba(0,212,255,0.8)}
+.sofi-fab-btn:hover{box-shadow:0 10px 36px rgba(0,212,255,0.4);opacity:.92}
 .sofi-drag-hint{font-size:10px;color:rgba(255,255,255,0.35);text-align:center;margin-top:2px;pointer-events:none;font-family:'Manrope',sans-serif}
 .sofi-dot{position:absolute;top:2px;right:2px;width:10px;height:10px;background:#00D4FF;border-radius:50%;border:2px solid #0d0d1a}
 .sofi-fab-label{background:rgba(13,13,26,0.95);border:1px solid rgba(255,255,255,0.1);color:#F5F5F7;font-family:'Manrope',sans-serif;font-size:13px;font-weight:600;padding:8px 14px;border-radius:100px;white-space:nowrap;backdrop-filter:blur(12px)}
