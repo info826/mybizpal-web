@@ -406,41 +406,41 @@ h1,h2,h3{font-family:'Manrope',sans-serif;line-height:1.1;letter-spacing:-0.03em
 
 /* SOFI WIDGET */
 .sofi-fab{position:fixed;z-index:500;display:flex;flex-direction:column;align-items:flex-end;gap:10px;touch-action:none;user-select:none}
-.sofi-fab-btn{width:58px;height:58px;border-radius:50%;background:linear-gradient(135deg,#25D366,#128C7E);border:none;cursor:grab;display:flex;align-items:center;justify-content:center;box-shadow:0 6px 28px rgba(37,211,102,0.35);position:relative;transition:box-shadow .2s}
+.sofi-fab-btn{width:58px;height:58px;border-radius:50%;background:#0d0d1a;border:1.5px solid rgba(0,212,255,0.5);cursor:grab;display:flex;align-items:center;justify-content:center;box-shadow:0 6px 28px rgba(0,212,255,0.15);position:relative;transition:box-shadow .2s}
 .sofi-fab-btn:active{cursor:grabbing}
-.sofi-fab-btn:hover{box-shadow:0 10px 36px rgba(37,211,102,0.45)}
+.sofi-fab-btn:hover{box-shadow:0 10px 36px rgba(0,212,255,0.25);border-color:rgba(0,212,255,0.8)}
 .sofi-drag-hint{font-size:10px;color:rgba(255,255,255,0.35);text-align:center;margin-top:2px;pointer-events:none;font-family:'Manrope',sans-serif}
-.sofi-dot{position:absolute;top:2px;right:2px;width:12px;height:12px;background:#00FF94;border-radius:50%;border:2px solid #000}
+.sofi-dot{position:absolute;top:2px;right:2px;width:10px;height:10px;background:#00D4FF;border-radius:50%;border:2px solid #0d0d1a}
 .sofi-fab-label{background:rgba(13,13,26,0.95);border:1px solid rgba(255,255,255,0.1);color:#F5F5F7;font-family:'Manrope',sans-serif;font-size:13px;font-weight:600;padding:8px 14px;border-radius:100px;white-space:nowrap;backdrop-filter:blur(12px)}
 .sofi-panel{position:fixed;bottom:100px;right:28px;z-index:499;width:340px;background:#0d0d1a;border:1px solid rgba(255,255,255,0.1);border-radius:20px;overflow:hidden;box-shadow:0 24px 80px rgba(0,0,0,0.6);display:flex;flex-direction:column;animation:panelIn .25s cubic-bezier(.34,1.4,.64,1) both}
 @keyframes panelIn{from{opacity:0;transform:translateY(14px) scale(.97)}to{opacity:1;transform:translateY(0) scale(1)}}
-.sofi-panel-header{background:linear-gradient(135deg,#25D366,#128C7E);padding:16px 18px;display:flex;align-items:center;gap:12px}
+.sofi-panel-header{background:linear-gradient(135deg,#0d0d1a,#111126);border-bottom:1px solid rgba(0,212,255,0.2);padding:16px 18px;display:flex;align-items:center;gap:12px}
 .sofi-avatar{width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
 .sofi-header-text h4{font-size:14px;font-weight:700;color:#fff;margin-bottom:1px}
 .sofi-header-text p{font-size:11px;color:rgba(255,255,255,0.75)}
 .sofi-close{margin-left:auto;background:rgba(255,255,255,0.15);border:none;color:#fff;width:28px;height:28px;border-radius:50%;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-family:'Manrope',sans-serif}
 .sofi-close:hover{background:rgba(255,255,255,0.25)}
 /* Always-visible WA direct button */
-.sofi-wa-direct{display:flex;align-items:center;justify-content:center;gap:8px;padding:10px 16px;background:rgba(37,211,102,0.1);border-bottom:1px solid rgba(37,211,102,0.2);font-family:'Manrope',sans-serif;font-size:12px;font-weight:700;color:#25D366;cursor:pointer;text-decoration:none;transition:background .2s}
-.sofi-wa-direct:hover{background:rgba(37,211,102,0.18)}
+.sofi-wa-direct{display:flex;align-items:center;justify-content:center;gap:8px;padding:10px 16px;background:rgba(0,212,255,0.06);border-bottom:1px solid rgba(0,212,255,0.15);font-family:'Manrope',sans-serif;font-size:12px;font-weight:700;color:#00D4FF;cursor:pointer;text-decoration:none;transition:background .2s}
+.sofi-wa-direct:hover{background:rgba(0,212,255,0.1)}
 .sofi-messages{flex:1;padding:14px;display:flex;flex-direction:column;gap:9px;overflow-y:auto;max-height:260px;min-height:180px}
 .sofi-msg{max-width:86%;padding:10px 13px;border-radius:13px;font-size:13px;line-height:1.55;font-family:'Manrope',sans-serif;white-space:pre-wrap}
-.sofi-msg.sofi{background:rgba(37,211,102,0.08);border:1px solid rgba(37,211,102,0.15);color:#F5F5F7;align-self:flex-start;border-bottom-left-radius:3px}
+.sofi-msg.sofi{background:rgba(0,212,255,0.06);border:1px solid rgba(0,212,255,0.15);color:#F5F5F7;align-self:flex-start;border-bottom-left-radius:3px}
 .sofi-msg.user{background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.08);color:#A1A1A6;align-self:flex-end;border-bottom-right-radius:3px}
-.sofi-typing{display:flex;gap:4px;padding:10px 13px;background:rgba(37,211,102,0.08);border:1px solid rgba(37,211,102,0.15);border-radius:13px;border-bottom-left-radius:3px;width:fit-content;align-self:flex-start}
-.sofi-tdot{width:6px;height:6px;background:#25D366;border-radius:50%;animation:sofiBounce 1.3s infinite}
+.sofi-typing{display:flex;gap:4px;padding:10px 13px;background:rgba(0,212,255,0.06);border:1px solid rgba(0,212,255,0.15);border-radius:13px;border-bottom-left-radius:3px;width:fit-content;align-self:flex-start}
+.sofi-tdot{width:6px;height:6px;background:#00D4FF;border-radius:50%;animation:sofiBounce 1.3s infinite}
 .sofi-tdot:nth-child(2){animation-delay:.18s}
 .sofi-tdot:nth-child(3){animation-delay:.36s}
 @keyframes sofiBounce{0%,60%,100%{transform:translateY(0);opacity:.4}30%{transform:translateY(-6px);opacity:1}}
-.sofi-handoff{background:rgba(37,211,102,0.06);border:1px solid rgba(37,211,102,0.18);border-radius:12px;padding:13px 15px;margin:0 14px 4px;text-align:center}
+.sofi-handoff{background:rgba(0,212,255,0.06);border:1px solid rgba(0,212,255,0.18);border-radius:12px;padding:13px 15px;margin:0 14px 4px;text-align:center}
 .sofi-handoff p{font-size:12px;color:#A1A1A6;margin-bottom:9px;line-height:1.5}
 .sofi-wa-btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:10px;border-radius:100px;background:linear-gradient(135deg,#25D366,#128C7E);color:#fff;border:none;font-family:'Manrope',sans-serif;font-size:13px;font-weight:700;cursor:pointer;transition:opacity .2s;text-decoration:none}
 .sofi-wa-btn:hover{opacity:.88}
 .sofi-input-row{display:flex;gap:8px;padding:11px 14px;border-top:1px solid rgba(255,255,255,0.06)}
 .sofi-input{flex:1;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:9px 13px;color:#F5F5F7;font-family:'Manrope',sans-serif;font-size:13px;outline:none;transition:border-color .2s}
-.sofi-input:focus{border-color:rgba(37,211,102,0.4)}
+.sofi-input:focus{border-color:rgba(0,212,255,0.4)}
 .sofi-input::placeholder{color:#6E6E73}
-.sofi-send{width:36px;height:36px;background:linear-gradient(135deg,#25D366,#128C7E);border:none;border-radius:10px;color:#fff;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:opacity .2s;font-family:'Manrope',sans-serif}
+.sofi-send{width:36px;height:36px;background:linear-gradient(135deg,#00D4FF,#7B2FFF);border:none;border-radius:10px;color:#fff;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:opacity .2s;font-family:'Manrope',sans-serif}
 .sofi-send:hover{opacity:.85}
 .sofi-send:disabled{opacity:.3;cursor:not-allowed}
 
