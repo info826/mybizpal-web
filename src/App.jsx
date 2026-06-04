@@ -681,7 +681,7 @@ function SofiWidget() {
   const [context, setContext] = useState({});
 
   // Drag state
-  const [pos, setPos] = useState({ bottom: 28, right: 28 });
+  const [pos, setPos] = useState({ bottom: 100, right: 28 });
   const dragging = useRef(false);
   const dragStart = useRef({ x: 0, y: 0, bottom: 0, right: 0 });
   const didDrag = useRef(false);
