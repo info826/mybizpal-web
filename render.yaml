@@ -2,6 +2,7 @@ services:
   - type: web
     name: mybizpal-web
     env: static
+    autoDeploy: true
     buildCommand: npm run build
     staticPublishPath: ./dist
     routes:
