@@ -1,22 +1,16 @@
 // CookieBanner.jsx — PECR + UK GDPR compliant cookie consent
-// With Supabase consent logging for audit trail
+// Consent is logged via the MyBizPal API (server records the real IP for the audit trail)
 
 import { useState, useEffect } from "react";
 
 const CONSENT_KEY = "mbp_cookie_consent";
-const SUPABASE_URL = "https://jcmmlrtzhjqcfoeuvvmu.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpjbW1scnR6aGpxY2ZvZXV2dm11Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkwNDg3MzgsImV4cCI6MjA5NDYyNDczOH0.bLGTFgKkQrwf475LYSHdOON1V61LD2Zc9TYSKCRbbso";
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
 
 const logConsent = async (type) => {
   try {
-    await fetch(`${SUPABASE_URL}/rest/v1/consent_logs`, {
+    await fetch(`${API_URL}/api/consent-log`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "apikey": SUPABASE_ANON_KEY,
-        "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
-        "Prefer": "return=minimal",
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         consent_type: type,
         user_agent: navigator.userAgent,
