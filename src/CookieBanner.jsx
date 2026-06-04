@@ -1,9 +1,33 @@
 // CookieBanner.jsx — PECR + UK GDPR compliant cookie consent
-// Drop into src/CookieBanner.jsx and import in App.jsx
+// With Supabase consent logging for audit trail
 
 import { useState, useEffect } from "react";
 
 const CONSENT_KEY = "mbp_cookie_consent";
+const SUPABASE_URL = "https://jcmmlrtzhjqcfoeuvvmu.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpjbW1scnR6aGpxY2ZvZXV2dm11Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkwNDg3MzgsImV4cCI6MjA5NDYyNDczOH0.bLGTFgKkQrwf475LYSHdOON1V61LD2Zc9TYSKCRbbso";
+
+const logConsent = async (type) => {
+  try {
+    await fetch(`${SUPABASE_URL}/rest/v1/consent_logs`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "apikey": SUPABASE_ANON_KEY,
+        "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
+        "Prefer": "return=minimal",
+      },
+      body: JSON.stringify({
+        consent_type: type,
+        user_agent: navigator.userAgent,
+        page_url: window.location.href,
+      }),
+    });
+  } catch (err) {
+    // Fail silently — consent is still saved to localStorage
+    console.warn("Consent log failed:", err);
+  }
+};
 
 export default function CookieBanner() {
   const [visible, setVisible] = useState(false);
@@ -12,7 +36,6 @@ export default function CookieBanner() {
   useEffect(() => {
     const saved = localStorage.getItem(CONSENT_KEY);
     if (!saved) {
-      // Small delay so it doesn't flash on load
       setTimeout(() => setVisible(true), 800);
     } else {
       setShowIcon(true);
@@ -22,7 +45,6 @@ export default function CookieBanner() {
 
   const loadAnalytics = () => {
     // Load Google Analytics / HubSpot etc. here once consent is given
-    // Example: inject GA script tag
     // if (!document.getElementById("ga-script")) {
     //   const s = document.createElement("script");
     //   s.id = "ga-script";
@@ -32,10 +54,11 @@ export default function CookieBanner() {
     // }
   };
 
-  const accept = (type) => {
+  const accept = async (type) => {
     localStorage.setItem(CONSENT_KEY, type);
     setVisible(false);
     setShowIcon(true);
+    await logConsent(type);
     if (type === "all") loadAnalytics();
   };
 
