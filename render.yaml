@@ -5,6 +5,27 @@ services:
     autoDeploy: true
     buildCommand: npm run build
     staticPublishPath: ./dist
+    # Public-facing values. VITE_API_URL is baked into the client bundle by vite;
+    # the rest are stamped into dist/*.html by scripts/build-legal.js.
+    envVars:
+      - key: VITE_API_URL
+        value: https://mybizpal-api.onrender.com
+      - key: VITE_SUPPORT_PHONE
+        value: "+44 7360 280655"
+      - key: VITE_WA_NUMBER
+        value: "447360280655"
+      - key: VITE_COMPANY_EMAIL
+        value: info@mybizpal.ai
+      - key: VITE_COMPANY_NAME
+        value: De Ornelas Advisory Group Ltd
+      - key: VITE_COMPANY_NO
+        value: "16822556"
+      - key: VITE_ICO_REG
+        value: C1826607
+      - key: VITE_COMPANY_ADDRESS
+        value: "82a James Carter Road, Mildenhall, Bury St. Edmunds, England, IP28 7DE"
+      - key: VITE_WEBSITE
+        value: mybizpal.ai
     routes:
       # Clean URLs for static legal/info pages → actual .html files.
       # These must come BEFORE the SPA catch-all below.
