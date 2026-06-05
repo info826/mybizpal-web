@@ -4,7 +4,7 @@ import CookieBanner from "./CookieBanner";
 const LOGO_FULL = "/logo-full.png";
 const LOGO_ICON = "/logo-icon.png";
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
-const WA_NUMBER = "447380311086";
+const WA_NUMBER = import.meta.env.VITE_WA_NUMBER || "447360280655";
 
 // ── Integration logo paths (drop SVGs/PNGs into /public/logos/) ──────────────
 const INTEGRATIONS = [
