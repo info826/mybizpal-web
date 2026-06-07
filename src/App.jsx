@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef } from "react";
 import CookieBanner from "./CookieBanner";
 
-const LOGO_FULL = "/logo-full.png";
-const LOGO_ICON = "/logo-icon.png";
+const LOGO_FULL = "https://res.cloudinary.com/dp8novljz/image/upload/MyBizPal_Full_Logo_Dark_BG_R_gud0ag.png";
+const LOGO_ICON = "https://res.cloudinary.com/dp8novljz/image/upload/MyBizPal_Full_Logo_Dark_BG_R_gud0ag.png";
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
 const WA_NUMBER = import.meta.env.VITE_WA_NUMBER || "447360280655";
 
