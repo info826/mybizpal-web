@@ -6,18 +6,21 @@ const LOGO_ICON = "/logo-icon.png";
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
 const WA_NUMBER = import.meta.env.VITE_WA_NUMBER || "447360280655";
 
-// ── Integration logo paths (drop SVGs/PNGs into /public/logos/) ──────────────
+// ── Integration logos (Cloudinary-hosted, trimmed & fitted to 72px height) ───
+const CLD = "https://res.cloudinary.com/dp8novljz/image/upload/f_auto,q_auto,e_trim,h_72,c_fit";
 const INTEGRATIONS = [
-  { name: "WhatsApp",      bg: "#25D366", text: "#fff", short: "W",  file: "/logos/whatsapp.svg"   },
-  { name: "Google Cal",    bg: "#4285F4", text: "#fff", short: "G",  file: "/logos/gcal.svg"       },
-  { name: "Calendly",      bg: "#006BFF", text: "#fff", short: "Cy", file: "/logos/calendly.svg"   },
-  { name: "Zoom",          bg: "#2D8CFF", text: "#fff", short: "Z",  file: "/logos/zoom.svg"       },
-  { name: "N8N",           bg: "#EA4B35", text: "#fff", short: "n8", file: "/logos/n8n.svg"        },
-  { name: "HubSpot",       bg: "#FF7A59", text: "#fff", short: "H",  file: "/logos/hubspot.svg"    },
-  { name: "GoHighLevel",   bg: "#008ECC", text: "#fff", short: "GH", file: "/logos/ghl.svg"        },
-  { name: "Gmail",         bg: "#EA4335", text: "#fff", short: "Gm", file: "/logos/gmail.svg"      },
-  { name: "Outlook",       bg: "#0072C6", text: "#fff", short: "O",  file: "/logos/outlook.svg"    },
-  { name: "Stripe",        bg: "#635BFF", text: "#fff", short: "S",  file: "/logos/stripe.svg"     },
+  { name: "WhatsApp",        logo: `${CLD}/WhatsApp_Logo_b8suk6.png`        },
+  { name: "Google Calendar", logo: `${CLD}/Google_Calendar_Logo_wj8gjo.png` },
+  { name: "Calendly",        logo: `${CLD}/Calendly_Logo_nw6arq.png`        },
+  { name: "Zoom",            logo: `${CLD}/Zoom_Logo_hxzqir.png`            },
+  { name: "n8n",             logo: `${CLD}/N8N_Logo_qo07ha.png`             },
+  { name: "HubSpot",         logo: `${CLD}/HubSpot_Logo_k3thxr.png`         },
+  { name: "GoHighLevel",     logo: `${CLD}/GoHighLevel_Logo_sdm3ck.png`     },
+  { name: "Gmail",           logo: `${CLD}/Gmail_Logo_k5yyp9.png`           },
+  { name: "Outlook",         logo: `${CLD}/Outlook_Logo_mwemjs.png`         },
+  { name: "Slack",           logo: `${CLD}/Slack_Logo_ic65to.png`           },
+  { name: "Stripe",          logo: `${CLD}/Stripe_Logo_twta5u.png`          },
+  { name: "LinkedIn",        logo: `${CLD}/LinkedIn_Logo_yqllkl.png`        },
 ];
 
 const COUNTRIES = [
@@ -209,14 +212,28 @@ h1,h2,h3{font-family:'Manrope',sans-serif;line-height:1.1;letter-spacing:-0.03em
 .feat-desc{font-size:14px;color:#A1A1A6;line-height:1.7;font-weight:300}
 
 /* INTEGRATIONS */
-.logos-section{padding:48px 24px;border-top:1px solid rgba(255,255,255,0.06);border-bottom:1px solid rgba(255,255,255,0.06);background:rgba(255,255,255,0.01)}
+.logos-section{padding:88px 24px;border-top:1px solid rgba(255,255,255,0.06);border-bottom:1px solid rgba(255,255,255,0.06);background:rgba(255,255,255,0.01)}
 .logos-inner{max-width:1200px;margin:0 auto;text-align:center}
-.logos-label{font-size:12px;color:#555565;text-transform:uppercase;letter-spacing:0.1em;font-weight:600;margin-bottom:20px}
-.logos-grid{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:10px}
-.logo-pill{display:flex;align-items:center;gap:8px;padding:8px 16px;border:1px solid rgba(255,255,255,0.09);border-radius:100px;background:rgba(255,255,255,0.03);font-size:13px;font-weight:600;color:#A1A1A6;white-space:nowrap;transition:border-color .2s}
-.logo-pill:hover{border-color:rgba(255,255,255,0.2);color:#F5F5F7}
-.logo-icon-wrap{width:20px;height:20px;border-radius:5px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:10px;font-weight:800;overflow:hidden}
-.logo-icon-wrap img{width:100%;height:100%;object-fit:contain}
+.logos-label{font-size:13px;color:#7B7B8C;text-transform:uppercase;letter-spacing:3px;font-weight:700;margin-bottom:40px}
+.logo-pill{display:inline-flex;align-items:center;gap:14px;padding:11px 28px 11px 11px;border:1px solid rgba(255,255,255,0.09);border-radius:100px;background:#101019;white-space:nowrap;flex-shrink:0}
+.logo-tile{width:48px;height:48px;border-radius:13px;background:#fff;display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden}
+.logo-tile img{width:32px;height:32px;object-fit:contain}
+.logo-name{font-size:17px;font-weight:600;color:#F2F2F7}
+.marquee-row{overflow:hidden;-webkit-mask-image:linear-gradient(90deg,transparent,#000 10%,#000 90%,transparent);mask-image:linear-gradient(90deg,transparent,#000 10%,#000 90%,transparent)}
+.marquee-row+.marquee-row{margin-top:18px}
+.marquee-track{display:flex;align-items:center;gap:14px;width:max-content}
+.logos-disclaimer{max-width:600px;margin:36px auto 0;font-size:11px;color:#46464F;line-height:1.6}
+@media (prefers-reduced-motion: no-preference){
+  .marquee-track{animation:logoMarquee 48s linear infinite}
+  .marquee-row-1 .marquee-track{animation-direction:reverse}
+  .marquee-row:hover .marquee-track{animation-play-state:paused}
+}
+@keyframes logoMarquee{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+@media (prefers-reduced-motion: reduce){
+  .marquee-row{-webkit-mask-image:none;mask-image:none}
+  .marquee-row+.marquee-row{margin-top:14px}
+  .marquee-track{flex-wrap:wrap;justify-content:center;width:auto}
+}
 
 /* CALCULATOR */
 .calc-section{padding:80px 24px;position:relative;z-index:1}
@@ -475,18 +492,6 @@ function FAQ({ q, a }) {
     <div className={"faq-item" + (open ? " open" : "")}>
       <div className="faq-q" onClick={() => setOpen(!open)}>{q}<span className="faq-chevron">+</span></div>
       <div className="faq-a">{a}</div>
-    </div>
-  );
-}
-
-function LogoIcon({ integration }) {
-  const [imgErr, setImgErr] = useState(false);
-  return (
-    <div className="logo-icon-wrap" style={{ background: integration.bg }}>
-      {!imgErr
-        ? <img src={integration.file} alt={integration.name} onError={() => setImgErr(true)} />
-        : <span style={{ color: integration.text, fontSize: 9, fontWeight: 800 }}>{integration.short}</span>
-      }
     </div>
   );
 }
@@ -1135,14 +1140,25 @@ export default function App() {
       <div className="logos-section">
         <div className="logos-inner">
           <div className="logos-label">Works with the tools you already use</div>
-          <div className="logos-grid">
-            {INTEGRATIONS.map(int => (
-              <div className="logo-pill" key={int.name}>
-                <LogoIcon integration={int} />
-                {int.name}
+          {[1, 2].map(row => {
+            // Row 2 starts halfway through the list so the two rows never align vertically
+            const list = row === 1
+              ? INTEGRATIONS
+              : [...INTEGRATIONS.slice(6), ...INTEGRATIONS.slice(0, 6)];
+            return (
+            <div className={`marquee-row marquee-row-${row}`} key={row}>
+              <div className="marquee-track">
+                {[...list, ...list].map((int, i) => (
+                  <div className="logo-pill" key={`${row}-${i}`}>
+                    <span className="logo-tile"><img src={int.logo} alt="" /></span>
+                    <span className="logo-name">{int.name}</span>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
+            </div>
+            );
+          })}
+          <p className="logos-disclaimer">All product names, logos and brands are property of their respective owners. Use of these names and logos does not imply endorsement.</p>
         </div>
       </div>
 
