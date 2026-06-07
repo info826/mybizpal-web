@@ -119,7 +119,7 @@ h1,h2,h3{font-family:'Manrope',sans-serif;line-height:1.1;letter-spacing:-0.03em
 .nav{position:fixed;top:0;left:0;right:0;z-index:200;height:120px;padding:0 48px;display:flex;align-items:center;justify-content:space-between;transition:all .4s}
 .nav.scrolled{background:rgba(0,0,0,0.75);backdrop-filter:blur(24px);border-bottom:1px solid rgba(255,255,255,0.08)}
 .nav-logo{display:flex;align-items:center;text-decoration:none}
-.nav-logo img{height:200px;width:auto}
+.nav-logo img{height:40px;width:auto}
 .nav-links{display:flex;align-items:center;gap:28px;list-style:none}
 .nav-links a{color:#A1A1A6;text-decoration:none;font-size:14px;font-weight:500;transition:color .2s;cursor:pointer}
 .nav-links a:hover{color:#F5F5F7}
@@ -465,7 +465,7 @@ h1,h2,h3{font-family:'Manrope',sans-serif;line-height:1.1;letter-spacing:-0.03em
 /* RESPONSIVE */
 @media(max-width:960px){
   .nav{padding:0 20px 0 8px;height:140px}.nav-links{display:none}.nav-right{display:none}.hamburger{display:flex}
-  .nav-logo img{height:168px}
+  .nav-logo img{height:40px}
   .mobile-menu{top:140px}
   .hero-ctas{flex-direction:column;align-items:stretch}.hero-ctas .btn-primary,.hero-ctas .btn-outline{width:100%;justify-content:center}
   .stats-bar{display:grid;grid-template-columns:1fr 1fr}.stat-item{flex:none;border-right:none;border-bottom:1px solid rgba(255,255,255,0.08)}.stat-item:nth-child(odd){border-right:1px solid rgba(255,255,255,0.08)}.stat-item:nth-last-child(-n+2){border-bottom:none}
@@ -1368,7 +1368,7 @@ export default function App() {
         <div className="footer-grid">
           <div>
             <a className="nav-logo" href="#" style={{ display: "inline-flex", marginBottom: 12 }}>
-              <img src={LOGO_ICON} alt="MyBizPal" style={{ height: "100px", width: "auto" }} />
+              <img src={LOGO_ICON} alt="MyBizPal" style={{ height: "48px", width: "auto" }} />
             </a>
             <p className="footer-brand-desc">24/7 AI voice agents and automation for growing SMEs. Never miss a call, booking, or lead again.</p>
           </div>
