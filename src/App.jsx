@@ -1402,7 +1402,7 @@ export default function App() {
         </div>
         <div className="footer-bottom">
           <div className="footer-legal">
-            © 2025 MyBizPal®. All rights reserved. MyBizPal® is a trading name of De Ornelas Advisory Group Ltd.<br />
+            © 2026 MyBizPal®. All rights reserved. MyBizPal® is a trading name of De Ornelas Advisory Group Ltd.<br />
             Company No: 16822556 · Registered in England &amp; Wales · ICO Reg: C1826607
           </div>
           <div className="footer-socials">
