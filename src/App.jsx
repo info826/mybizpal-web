@@ -1446,9 +1446,6 @@ export default function App() {
         subtitle="A complete walkthrough of features, integrations, and what goes live on day one."
         duration="3:45" accentColor="#7B2FFF" />
 
-      {/* PLATFORM CAROUSEL */}
-      <PlatformCarousel />
-
       {/* REVENUE CALCULATOR */}
       <RevenueCalculator onOpenModal={openModal} />
 
@@ -1480,6 +1477,9 @@ export default function App() {
           ))}
         </div>
       </section>
+
+      {/* PLATFORM CAROUSEL */}
+      <PlatformCarousel />
 
       {/* INTEGRATIONS */}
       <div className="logos-section">
