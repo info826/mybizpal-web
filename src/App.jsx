@@ -25,14 +25,6 @@ const INTEGRATIONS = [
   { name: "LinkedIn",        logo: `${CLD}/LinkedIn_Logo_yqllkl.png`        },
 ];
 
-const COUNTRIES = [
-  {code:"+44",flag:"🇬🇧",name:"UK"},{code:"+1",flag:"🇺🇸",name:"US"},{code:"+34",flag:"🇪🇸",name:"ES"},
-  {code:"+351",flag:"🇵🇹",name:"PT"},{code:"+49",flag:"🇩🇪",name:"DE"},{code:"+33",flag:"🇫🇷",name:"FR"},
-  {code:"+39",flag:"🇮🇹",name:"IT"},{code:"+31",flag:"🇳🇱",name:"NL"},{code:"+353",flag:"🇮🇪",name:"IE"},
-  {code:"+61",flag:"🇦🇺",name:"AU"},{code:"+1",flag:"🇨🇦",name:"CA"},{code:"+971",flag:"🇦🇪",name:"UAE"},
-  {code:"+91",flag:"🇮🇳",name:"IN"},{code:"+55",flag:"🇧🇷",name:"BR"},{code:"+27",flag:"🇿🇦",name:"ZA"},
-];
-
 const FAQS = [
   {q:"Does MyBizPal sound like a real human?",a:"Yes. We use ElevenLabs and advanced conversational AI to deliver natural, human-quality voices. The vast majority of callers cannot tell the difference."},
   {q:"How quickly can I go live?",a:"Most businesses are fully live within 24 hours. We handle onboarding, voice training, and integrations — no technical knowledge needed."},
@@ -526,37 +518,9 @@ function FAQ({ q, a }) {
   );
 }
 
-function CountrySelect({ value, onChange }) {
-  const [open, setOpen] = useState(false);
-  const ref = useRef(null);
-  const selected = COUNTRIES.find(c => c.code === value) || COUNTRIES[0];
-  useEffect(() => {
-    const h = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
-    document.addEventListener("mousedown", h);
-    return () => document.removeEventListener("mousedown", h);
-  }, []);
-  return (
-    <div className="country-select" ref={ref}>
-      <div className={"country-trigger" + (open ? " open" : "")} onClick={() => setOpen(!open)}>
-        <span>{selected.flag} {value}</span>
-        <span style={{ fontSize: 9, color: "#6E6E73" }}>▼</span>
-      </div>
-      {open && (
-        <div className="country-dropdown">
-          {COUNTRIES.map((c, i) => (
-            <div key={i} className={"country-option" + (c.code === value && c.name === selected.name ? " active" : "")}
-              onClick={() => { onChange(c.code); setOpen(false); }}>
-              {c.flag} {c.name} {c.code}
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
 function DemoForm({ onClose }) {
-  const [f, setF] = useState({ firstName: "", lastName: "", email: "", countryCode: "+44", phone: "", message: "" });
+  const [f, setF] = useState({ firstName: "", lastName: "", email: "", message: "" });
+  const [phone, setPhone] = useState("");
   const [errs, setErrs] = useState({});
   const [loading, setLoading] = useState(false);
   const [done, setDone] = useState(false);
@@ -566,9 +530,15 @@ function DemoForm({ onClose }) {
     if (!f.firstName.trim()) e.firstName = "Required";
     if (!f.lastName.trim()) e.lastName = "Required";
     if (!f.email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(f.email)) e.email = "Valid email required";
-    if (!f.phone.trim()) e.phone = "Required";
+    if (!phone || !isValidPhoneNumber(phone)) e.phone = "Please enter a valid phone number";
     return e;
   };
+
+  const formValid = !!(
+    f.firstName.trim() && f.lastName.trim() &&
+    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(f.email.trim()) &&
+    phone && isValidPhoneNumber(phone)
+  );
 
   const submit = async () => {
     const e = validate();
@@ -580,7 +550,7 @@ function DemoForm({ onClose }) {
         body: JSON.stringify({
           name: `${f.firstName} ${f.lastName}`,
           email: f.email,
-          phone: `${f.countryCode}${f.phone}`,
+          phone: phone,
           business: f.message,
           source: "website_demo_form",
         }),
@@ -624,9 +594,8 @@ function DemoForm({ onClose }) {
       </div>
       <div className="form-group">
         <label className="form-label">Phone Number <span>*</span></label>
-        <div className="phone-wrap">
-          <CountrySelect value={f.countryCode} onChange={v => ch("countryCode", v)} />
-          <input className={"form-input" + (errs.phone ? " err" : "")} placeholder="7700 000000" value={f.phone} onChange={e => ch("phone", e.target.value)} style={{ flex: 1 }} />
+        <div className={"sales-phone" + (errs.phone ? " err" : "")}>
+          <PhoneInput defaultCountry="GB" international value={phone} onChange={setPhone} />
         </div>
         {errs.phone && <div className="field-err">{errs.phone}</div>}
       </div>
@@ -634,7 +603,7 @@ function DemoForm({ onClose }) {
         <label className="form-label">About your business <span style={{ color: "#6E6E73", fontWeight: 400 }}>(optional)</span></label>
         <input className="form-input" placeholder="e.g. Dental clinic, 4 staff, 50 calls/week" value={f.message} onChange={e => ch("message", e.target.value)} />
       </div>
-      <button className="form-submit" onClick={submit} disabled={loading}>
+      <button className="form-submit" onClick={submit} disabled={loading || !formValid}>
         {loading ? "Connecting..." : "Get a Live Demo Call →"}
       </button>
       <p className="form-note">🔒 No spam. No credit card. Demo call arrives within 30 seconds.</p>
