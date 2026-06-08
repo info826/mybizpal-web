@@ -504,9 +504,116 @@ textarea.form-input{min-height:88px;resize:vertical;font-family:'Manrope',sans-s
   .modal-overlay{padding:12px}
   .modal-box{max-width:100%}
 }
+
+/* ===== VISUAL ENHANCEMENTS ===== */
+@property --angle { syntax:'<angle>'; initial-value:0deg; inherits:false; }
+@keyframes borderSpin{to{--angle:360deg}}
+
+/* 1. Glowing edge arcs */
+.bg-arcs{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+.arc-svg{position:absolute;top:50%;height:170vh;width:auto}
+.arc-left{left:0;transform:translate(-42%,-50%)}
+.arc-right{right:0;transform:translate(42%,-50%)}
+@media (prefers-reduced-motion:no-preference){
+  .arc-left{animation:arcDriftL 26s ease-in-out infinite}
+  .arc-right{animation:arcDriftR 32s ease-in-out infinite}
+}
+@keyframes arcDriftL{0%,100%{transform:translate(-42%,-50%) rotate(0deg)}50%{transform:translate(-39%,-47%) rotate(4deg)}}
+@keyframes arcDriftR{0%,100%{transform:translate(42%,-50%) rotate(0deg)}50%{transform:translate(39%,-53%) rotate(-4deg)}}
+
+/* 2 & 3. Illuminated rotating border on primary buttons only */
+.btn-primary,.p-btn-grad,.form-submit{position:relative}
+.btn-primary::before,.p-btn-grad::before,.form-submit::before{content:'';position:absolute;inset:0;border-radius:inherit;padding:2px;background:conic-gradient(from var(--angle),#00D4FF,#7B5FFF,#00D4FF);-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;pointer-events:none}
+@media (prefers-reduced-motion:no-preference){.btn-primary::before,.p-btn-grad::before,.form-submit::before{animation:borderSpin 3s linear infinite}}
+
+/* 4a. Illuminated border on the live-demo box */
+.demo-inner::before{content:'';position:absolute;inset:0;border-radius:inherit;padding:1.5px;background:conic-gradient(from var(--angle),#00D4FF,#7B5FFF,#00D4FF);-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;z-index:2;pointer-events:none}
+@media (prefers-reduced-motion:no-preference){.demo-inner::before{animation:borderSpin 5s linear infinite}}
+
+/* 4b. Platform carousel */
+.platform-section{padding:100px 24px;max-width:1200px;margin:0 auto;position:relative;z-index:1}
+.pc-head{text-align:center;margin-bottom:56px}
+.pc-head h2{font-size:clamp(36px,5vw,52px);font-weight:800;letter-spacing:-0.04em;margin:6px 0 14px;color:#F5F5F7}
+.pc-head p{font-size:18px;color:#A1A1A6;font-weight:300;max-width:560px;margin:0 auto}
+.pc-slide{display:none}
+.pc-slide.active{display:block;animation:pcFade .5s ease}
+@keyframes pcFade{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+.pc-grid{display:grid;grid-template-columns:1fr 1fr;gap:52px;align-items:center}
+.pc-num{font-size:13px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:#00D4FF;margin-bottom:16px}
+.pc-title{font-size:clamp(26px,3.5vw,34px);font-weight:800;letter-spacing:-0.03em;line-height:1.12;margin-bottom:16px;color:#F5F5F7}
+.pc-desc{font-size:16px;line-height:1.65;color:#A1A1A6;font-weight:300;margin-bottom:26px}
+.pc-chips{display:flex;flex-wrap:wrap;gap:10px}
+.pc-chip{padding:8px 16px;border:1px solid rgba(255,255,255,0.1);border-radius:100px;font-size:13px;font-weight:600;color:#C8C8D2;background:rgba(255,255,255,0.03)}
+.pc-visual{position:relative;border-radius:24px;padding:1.5px;background:linear-gradient(135deg,rgba(0,212,255,0.5),rgba(123,95,255,0.5))}
+.pc-visual-inner{background:#0a0a14;border-radius:23px;padding:48px 40px;min-height:300px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
+.pc-icon{width:92px;height:92px;border-radius:24px;background:linear-gradient(135deg,#00D4FF,#7B2FFF);display:flex;align-items:center;justify-content:center;font-size:42px;margin-bottom:22px}
+.pc-metric{font-size:40px;font-weight:800;letter-spacing:-1px;background:linear-gradient(120deg,#00D4FF,#9B5FFF);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.pc-metric-label{font-size:14px;color:#7B7B8C;margin-top:6px}
+.pc-controls{display:flex;align-items:center;justify-content:center;gap:24px;margin-top:44px}
+.pc-arrow{width:46px;height:46px;border-radius:50%;border:1px solid rgba(255,255,255,0.15);background:transparent;color:#fff;font-size:18px;cursor:pointer;font-family:'Manrope',sans-serif;transition:border-color .2s,background .2s}
+.pc-arrow:hover{border-color:#00D4FF;background:rgba(0,212,255,0.08)}
+.pc-dots{display:flex;gap:9px}
+.pc-dot{width:9px;height:9px;border-radius:50%;border:none;background:rgba(255,255,255,0.2);cursor:pointer;padding:0;transition:width .2s,background .2s}
+.pc-dot.active{width:26px;border-radius:5px;background:linear-gradient(90deg,#00D4FF,#7B2FFF)}
+@media(max-width:820px){.pc-grid{grid-template-columns:1fr;gap:32px}}
+@media (prefers-reduced-motion:reduce){.pc-slide.active{animation:none}}
 `;
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
+
+const PLATFORM_SLIDES = [
+  { num:"01 · Find", icon:"🎯", title:"We find your ideal customers", desc:"Targeted B2B prospecting across outbound AI calls, email and LinkedIn. We build lists of your ideal customer and start the conversation — at scale, without the manual grind.", chips:["Outbound AI calls","Multichannel outreach","B2B target lists","100+ data sources"], metric:"100+", metricLabel:"data sources searched" },
+  { num:"02 · Engage", icon:"📞", title:"An AI that holds real conversations", desc:"A supernatural, human-sounding voice that answers calls and replies on WhatsApp and SMS in seconds — and never sounds robotic. Callers feel like they're talking to your best receptionist.", chips:["Supernatural voice","WhatsApp + SMS","8-second replies","Answers 24/7"], metric:"24/7", metricLabel:"never misses a lead" },
+  { num:"03 · Qualify", icon:"✨", title:"Knows who's ready to buy", desc:"Every lead is qualified and scored in real time. Your warmest opportunities rise to the top, so you spend time only on the leads that actually convert.", chips:["Lead scoring","Intent detection","Auto-routing","Warm-lead alerts"], metric:"Live", metricLabel:"qualification & scoring" },
+  { num:"04 · Nurture", icon:"🔥", title:"Warms every lead until they're ready", desc:"Automated nurture sequences across email and WhatsApp keep leads engaged. Cold and dormant leads get re-activated — nothing slips through the cracks.", chips:["Email + WhatsApp","Drip sequences","Re-engagement","Smart follow-ups"], metric:"0", metricLabel:"leads left behind" },
+  { num:"05 · Remember", icon:"🧠", title:"Recognises and remembers every customer", desc:"The AI remembers past conversations across voice, WhatsApp and SMS. Returning customers are greeted with familiarity — it knows who they are and picks up exactly where you left off, learning with every interaction.", chips:["Memory across channels","Returning-caller recall","Personalised","Always learning"], metric:"∞", metricLabel:"memory across channels" },
+  { num:"06 · Convert", icon:"📅", title:"Books warm leads into your calendar", desc:"Qualified, nurtured leads are booked straight into your calendar — synced with Google Calendar, Calendly and your CRM. You just show up to the call.", chips:["Auto-booking","Calendar sync","CRM sync","Zero admin"], metric:"1-click", metricLabel:"straight to calendar" },
+];
+
+function PlatformCarousel() {
+  const [cur, setCur] = useState(0);
+  const n = PLATFORM_SLIDES.length;
+  useEffect(() => {
+    const t = setInterval(() => setCur(c => (c + 1) % n), 8000);
+    return () => clearInterval(t);
+  }, [n]);
+  const go = (i) => setCur((i + n) % n);
+  return (
+    <section className="platform-section" id="platform">
+      <div className="pc-head">
+        <div className="eyebrow">Platform Overview</div>
+        <h2>The full <span className="grad-text">MyBizPal</span> platform</h2>
+        <p>Far more than a receptionist. A complete AI revenue engine that finds, engages, qualifies, nurtures, remembers and books your leads — end to end.</p>
+      </div>
+      {PLATFORM_SLIDES.map((s, i) => (
+        <div className={"pc-slide" + (i === cur ? " active" : "")} key={i}>
+          <div className="pc-grid">
+            <div>
+              <div className="pc-num">{s.num}</div>
+              <h3 className="pc-title">{s.title}</h3>
+              <p className="pc-desc">{s.desc}</p>
+              <div className="pc-chips">{s.chips.map(c => <span className="pc-chip" key={c}>{c}</span>)}</div>
+            </div>
+            <div className="pc-visual"><div className="pc-visual-inner">
+              <div className="pc-icon">{s.icon}</div>
+              <div className="pc-metric">{s.metric}</div>
+              <div className="pc-metric-label">{s.metricLabel}</div>
+            </div></div>
+          </div>
+        </div>
+      ))}
+      <div className="pc-controls">
+        <button className="pc-arrow" onClick={() => go(cur - 1)} aria-label="Previous">‹</button>
+        <div className="pc-dots">
+          {PLATFORM_SLIDES.map((_, i) => (
+            <button key={i} className={"pc-dot" + (i === cur ? " active" : "")} onClick={() => go(i)} aria-label={`Slide ${i + 1}`} />
+          ))}
+        </div>
+        <button className="pc-arrow" onClick={() => go(cur + 1)} aria-label="Next">›</button>
+      </div>
+    </section>
+  );
+}
 
 function FAQ({ q, a }) {
   const [open, setOpen] = useState(false);
@@ -1200,6 +1307,34 @@ export default function App() {
     <>
       <style>{CSS}</style>
 
+      {/* BACKGROUND ARCS */}
+      <div className="bg-arcs" aria-hidden="true">
+        <svg className="arc-svg arc-left" viewBox="0 0 700 1400" preserveAspectRatio="xMidYMid meet">
+          <defs>
+            <linearGradient id="gPurple" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="8%" stopColor="#7B5FFF" stopOpacity="0"/>
+              <stop offset="50%" stopColor="#B49BFF" stopOpacity="1"/>
+              <stop offset="92%" stopColor="#7B5FFF" stopOpacity="0"/>
+            </linearGradient>
+            <filter id="glowP" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="16"/></filter>
+          </defs>
+          <circle cx="-120" cy="700" r="640" fill="none" stroke="url(#gPurple)" strokeWidth="11" filter="url(#glowP)"/>
+          <circle cx="-120" cy="700" r="640" fill="none" stroke="url(#gPurple)" strokeWidth="2.5"/>
+        </svg>
+        <svg className="arc-svg arc-right" viewBox="0 0 700 1400" preserveAspectRatio="xMidYMid meet">
+          <defs>
+            <linearGradient id="gCyan" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="8%" stopColor="#00D4FF" stopOpacity="0"/>
+              <stop offset="50%" stopColor="#5FE6FF" stopOpacity="1"/>
+              <stop offset="92%" stopColor="#00D4FF" stopOpacity="0"/>
+            </linearGradient>
+            <filter id="glowC" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="16"/></filter>
+          </defs>
+          <circle cx="820" cy="700" r="640" fill="none" stroke="url(#gCyan)" strokeWidth="11" filter="url(#glowC)"/>
+          <circle cx="820" cy="700" r="640" fill="none" stroke="url(#gCyan)" strokeWidth="2.5"/>
+        </svg>
+      </div>
+
       {/* NAV */}
       <nav className={"nav" + (scrolled ? " scrolled" : "")}>
         <a className="nav-logo" href="#"><img src={LOGO_FULL} alt="MyBizPal" /></a>
@@ -1310,6 +1445,9 @@ export default function App() {
       <VideoBox label="Platform Overview" title={<>The full <span className="grad-text">MyBizPal platform</span></>}
         subtitle="A complete walkthrough of features, integrations, and what goes live on day one."
         duration="3:45" accentColor="#7B2FFF" />
+
+      {/* PLATFORM CAROUSEL */}
+      <PlatformCarousel />
 
       {/* REVENUE CALCULATOR */}
       <RevenueCalculator onOpenModal={openModal} />
