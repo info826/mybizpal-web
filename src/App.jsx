@@ -1,4 +1,6 @@
 import { useState, useEffect, useRef } from "react";
+import PhoneInput, { isValidPhoneNumber } from "react-phone-number-input";
+import "react-phone-number-input/style.css";
 import CookieBanner from "./CookieBanner";
 
 const LOGO_FULL = "https://res.cloudinary.com/dp8novljz/image/upload/MyBizPal_Full_Logo_Dark_BG_R_gud0ag.png";
@@ -346,6 +348,15 @@ textarea.form-input{min-height:88px;resize:vertical;font-family:'Manrope',sans-s
 .plat-opt:hover{border-color:rgba(0,212,255,0.4)}
 .plat-opt.on{border-color:rgba(0,212,255,0.5);background:rgba(0,212,255,0.06);color:#F5F5F7}
 .plat-opt input{accent-color:#00D4FF;width:15px;height:15px;cursor:pointer;flex-shrink:0;margin:0}
+.sales-phone{display:flex;align-items:center;width:100%;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:11px 14px;transition:all .2s}
+.sales-phone:focus-within{border-color:rgba(0,212,255,0.5);background:rgba(0,212,255,0.04);box-shadow:0 0 0 3px rgba(0,212,255,0.08)}
+.sales-phone.err{border-color:rgba(255,69,58,0.6)}
+.sales-phone .PhoneInput{display:flex;align-items:center;width:100%;gap:8px}
+.sales-phone .PhoneInputInput{flex:1;min-width:0;background:transparent;border:none;outline:none;color:#F5F5F7;font-family:'Manrope',sans-serif;font-size:15px}
+.sales-phone .PhoneInputInput::placeholder{color:#6E6E73}
+.sales-phone .PhoneInputCountryIcon{box-shadow:none}
+.sales-phone .PhoneInputCountrySelect{color:#0d0d1a}
+.sales-phone .PhoneInputCountrySelectArrow{color:#6E6E73;opacity:.9}
 
 /* TESTIMONIALS */
 .testi-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
@@ -643,9 +654,10 @@ function ContactSalesForm({ onClose }) {
     companyWebsite: "", businessEmail: "",
     firstName: "", lastName: "", companyName: "",
     industry: "", companySize: "",
-    country: "United Kingdom", countryCode: "+44", phone: "",
+    country: "United Kingdom",
     platformInterest: [], useCase: "", heardAbout: "",
   });
+  const [phone, setPhone] = useState("");
   const [errs, setErrs] = useState({});
   const [loading, setLoading] = useState(false);
   const [done, setDone] = useState(false);
@@ -663,7 +675,7 @@ function ContactSalesForm({ onClose }) {
   const step1Valid = emailOk(f.businessEmail.trim());
   const step2Valid = !!(
     f.firstName.trim() && f.lastName.trim() && f.companyName.trim() &&
-    f.industry && f.companySize && f.country.trim() && f.phone.trim() && f.useCase.trim()
+    f.industry && f.companySize && f.country.trim() && phone && isValidPhoneNumber(phone) && f.useCase.trim()
   );
 
   const next = () => {
@@ -681,7 +693,7 @@ function ContactSalesForm({ onClose }) {
     if (!f.industry) e.industry = "Required";
     if (!f.companySize) e.companySize = "Required";
     if (!f.country.trim()) e.country = "Required";
-    if (!f.phone.trim()) e.phone = "Required";
+    if (!phone || !isValidPhoneNumber(phone)) e.phone = "Please enter a valid phone number";
     if (!f.useCase.trim()) e.useCase = "Required";
     if (Object.keys(e).length) { setErrs(e); return; }
     setErrs({}); setError(false); setLoading(true);
@@ -697,7 +709,7 @@ function ContactSalesForm({ onClose }) {
           industry: f.industry,
           companySize: f.companySize,
           country: f.country,
-          phone: `${f.countryCode}${f.phone}`,
+          phone: phone,
           platformInterest: f.platformInterest.join(", "),
           useCase: f.useCase,
           heardAbout: f.heardAbout,
@@ -790,9 +802,8 @@ function ContactSalesForm({ onClose }) {
           </div>
           <div className="form-group">
             <label className="form-label">Phone <span>*</span></label>
-            <div className="phone-wrap">
-              <CountrySelect value={f.countryCode} onChange={v => ch("countryCode", v)} />
-              <input className={"form-input" + (errs.phone ? " err" : "")} placeholder="7700 000000" value={f.phone} onChange={e => ch("phone", e.target.value)} style={{ flex: 1 }} />
+            <div className={"sales-phone" + (errs.phone ? " err" : "")}>
+              <PhoneInput defaultCountry="GB" international value={phone} onChange={setPhone} />
             </div>
             {errs.phone && <div className="field-err">{errs.phone}</div>}
           </div>
