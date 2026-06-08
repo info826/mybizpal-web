@@ -974,7 +974,12 @@ export default function App() {
     }
   };
 
-  const monthlySavings = { starter: (149 - 119) * 12, pro: (349 - 279) * 12, elite: (799 - 639) * 12 };
+  const monthlySavings = Object.fromEntries(
+    PLANS.map(p => {
+      const num = s => Number(String(s).replace(/,/g, ""));
+      return [p.key, (num(p.monthly) - num(p.yearly)) * 12];
+    })
+  );
 
   useEffect(() => {
     const h = () => setScrolled(window.scrollY > 20);
