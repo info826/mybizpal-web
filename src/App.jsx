@@ -510,16 +510,16 @@ textarea.form-input{min-height:88px;resize:vertical;font-family:'Manrope',sans-s
 @keyframes borderSpin{to{--angle:360deg}}
 
 /* 1. Glowing edge arcs */
-.bg-arcs{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
-.arc-svg{position:absolute;top:50%;height:170vh;width:auto}
-.arc-left{left:0;transform:translate(-42%,-50%)}
-.arc-right{right:0;transform:translate(42%,-50%)}
+.bg-arcs{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden;-webkit-mask:linear-gradient(90deg,#000,#000 20%,transparent 40%,transparent 60%,#000 80%,#000);mask:linear-gradient(90deg,#000,#000 20%,transparent 40%,transparent 60%,#000 80%,#000)}
+.arc-wrap{position:absolute;top:50%;height:160vh;aspect-ratio:1/2}
+.arc-left{left:0;transform:translate(-44%,-50%)}
+.arc-right{right:0;transform:translate(44%,-50%)}
+.arc-svg{width:100%;height:100%;transform-origin:center}
 @media (prefers-reduced-motion:no-preference){
-  .arc-left{animation:arcDriftL 26s ease-in-out infinite}
-  .arc-right{animation:arcDriftR 32s ease-in-out infinite}
+  .arc-left .arc-svg{animation:arcSpin 55s linear infinite}
+  .arc-right .arc-svg{animation:arcSpin 68s linear infinite reverse}
 }
-@keyframes arcDriftL{0%,100%{transform:translate(-42%,-50%) rotate(0deg)}50%{transform:translate(-39%,-47%) rotate(4deg)}}
-@keyframes arcDriftR{0%,100%{transform:translate(42%,-50%) rotate(0deg)}50%{transform:translate(39%,-53%) rotate(-4deg)}}
+@keyframes arcSpin{to{transform:rotate(360deg)}}
 
 /* 2 & 3. Illuminated rotating border on primary buttons only */
 .btn-primary,.p-btn-grad,.form-submit{position:relative}
@@ -1309,30 +1309,34 @@ export default function App() {
 
       {/* BACKGROUND ARCS */}
       <div className="bg-arcs" aria-hidden="true">
-        <svg className="arc-svg arc-left" viewBox="0 0 700 1400" preserveAspectRatio="xMidYMid meet">
-          <defs>
-            <linearGradient id="gPurple" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="8%" stopColor="#7B5FFF" stopOpacity="0"/>
-              <stop offset="50%" stopColor="#B49BFF" stopOpacity="1"/>
-              <stop offset="92%" stopColor="#7B5FFF" stopOpacity="0"/>
-            </linearGradient>
-            <filter id="glowP" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="16"/></filter>
-          </defs>
-          <circle cx="-120" cy="700" r="640" fill="none" stroke="url(#gPurple)" strokeWidth="11" filter="url(#glowP)"/>
-          <circle cx="-120" cy="700" r="640" fill="none" stroke="url(#gPurple)" strokeWidth="2.5"/>
-        </svg>
-        <svg className="arc-svg arc-right" viewBox="0 0 700 1400" preserveAspectRatio="xMidYMid meet">
-          <defs>
-            <linearGradient id="gCyan" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="8%" stopColor="#00D4FF" stopOpacity="0"/>
-              <stop offset="50%" stopColor="#5FE6FF" stopOpacity="1"/>
-              <stop offset="92%" stopColor="#00D4FF" stopOpacity="0"/>
-            </linearGradient>
-            <filter id="glowC" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="16"/></filter>
-          </defs>
-          <circle cx="820" cy="700" r="640" fill="none" stroke="url(#gCyan)" strokeWidth="11" filter="url(#glowC)"/>
-          <circle cx="820" cy="700" r="640" fill="none" stroke="url(#gCyan)" strokeWidth="2.5"/>
-        </svg>
+        <div className="arc-wrap arc-left">
+          <svg className="arc-svg" viewBox="0 0 700 1400" preserveAspectRatio="xMidYMid meet">
+            <defs>
+              <linearGradient id="gPurple" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="8%" stopColor="#7B5FFF" stopOpacity="0"/>
+                <stop offset="50%" stopColor="#B49BFF" stopOpacity="1"/>
+                <stop offset="92%" stopColor="#7B5FFF" stopOpacity="0"/>
+              </linearGradient>
+              <filter id="glowP" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="14"/></filter>
+            </defs>
+            <circle cx="350" cy="700" r="640" fill="none" stroke="url(#gPurple)" strokeWidth="11" filter="url(#glowP)"/>
+            <circle cx="350" cy="700" r="640" fill="none" stroke="url(#gPurple)" strokeWidth="2.5"/>
+          </svg>
+        </div>
+        <div className="arc-wrap arc-right">
+          <svg className="arc-svg" viewBox="0 0 700 1400" preserveAspectRatio="xMidYMid meet">
+            <defs>
+              <linearGradient id="gCyan" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="8%" stopColor="#00D4FF" stopOpacity="0"/>
+                <stop offset="50%" stopColor="#5FE6FF" stopOpacity="1"/>
+                <stop offset="92%" stopColor="#00D4FF" stopOpacity="0"/>
+              </linearGradient>
+              <filter id="glowC" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="14"/></filter>
+            </defs>
+            <circle cx="350" cy="700" r="640" fill="none" stroke="url(#gCyan)" strokeWidth="11" filter="url(#glowC)"/>
+            <circle cx="350" cy="700" r="640" fill="none" stroke="url(#gCyan)" strokeWidth="2.5"/>
+          </svg>
+        </div>
       </div>
 
       {/* NAV */}
