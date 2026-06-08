@@ -145,13 +145,18 @@ h1,h2,h3{font-family:'Manrope',sans-serif;line-height:1.1;letter-spacing:-0.03em
 .stat-val{font-family:'Manrope',sans-serif;font-size:30px;font-weight:800;letter-spacing:-0.04em;margin-bottom:2px}
 .stat-label{font-size:11px;color:#6E6E73;text-transform:uppercase;letter-spacing:0.1em}
 
-/* TICKER */
-.ticker-strip{border-top:1px solid rgba(255,255,255,0.08);border-bottom:1px solid rgba(255,255,255,0.08);overflow:hidden;padding:13px 0;background:rgba(255,255,255,0.02)}
-.ticker-track{display:flex;animation:tick 32s linear infinite;width:max-content}
-.ticker-track:hover{animation-play-state:paused}
-@keyframes tick{from{transform:translateX(0)}to{transform:translateX(-50%)}}
-.ticker-item{display:flex;align-items:center;gap:10px;padding:0 28px;font-size:12px;font-weight:600;color:#6E6E73;white-space:nowrap;text-transform:uppercase;letter-spacing:0.09em}
-.ticker-sep{width:4px;height:4px;border-radius:50%;background:#00D4FF;flex-shrink:0;opacity:.5}
+/* FEATURE STRIP (shimmer grid) */
+.feat-strip{border-top:1px solid rgba(255,255,255,0.08);border-bottom:1px solid rgba(255,255,255,0.08);padding:34px 24px;background:rgba(255,255,255,0.02);position:relative;z-index:1}
+.feat-strip-grid{max-width:1100px;margin:0 auto;display:flex;flex-wrap:wrap;gap:12px;justify-content:center}
+.feat-strip-tag{position:relative;padding:11px 20px;border-radius:12px;font-size:13.5px;font-weight:600;color:#D6D6DE;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);overflow:hidden;white-space:nowrap}
+.feat-strip-tag::after{content:'';position:absolute;top:0;left:-120%;width:60%;height:100%;background:linear-gradient(90deg,transparent,rgba(0,212,255,0.25),transparent)}
+@media (prefers-reduced-motion:no-preference){
+  .feat-strip-tag::after{animation:featShimmer 5s linear infinite}
+  .feat-strip-tag:nth-child(2n)::after{animation-delay:1.2s}
+  .feat-strip-tag:nth-child(3n)::after{animation-delay:2.4s}
+  .feat-strip-tag:nth-child(4n)::after{animation-delay:3.6s}
+}
+@keyframes featShimmer{0%{left:-120%}60%,100%{left:140%}}
 
 /* SECTIONS */
 .section{padding:100px 24px;max-width:1200px;margin:0 auto;position:relative;z-index:1}
@@ -1382,9 +1387,11 @@ export default function App() {
         </div>
       </section>
 
-      {/* TICKER */}
-      <div className="ticker-strip">
-        <div className="ticker-track">{TICKER.map((t, i) => <div className="ticker-item" key={i}><span className="ticker-sep" />{t}</div>)}</div>
+      {/* FEATURE STRIP */}
+      <div className="feat-strip">
+        <div className="feat-strip-grid">
+          {[...new Set(TICKER)].map((t, i) => <span className="feat-strip-tag" key={i}>{t}</span>)}
+        </div>
       </div>
 
       {/* VIDEO 1 — AI Agent Demo */}
