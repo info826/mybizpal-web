@@ -329,6 +329,19 @@ h1,h2,h3{font-family:'Manrope',sans-serif;line-height:1.1;letter-spacing:-0.03em
 .modal-close:hover{background:rgba(255,255,255,0.12);color:#F5F5F7}
 .modal-body{padding:20px 28px 28px}
 
+/* CONTACT SALES FORM */
+.sales-progress{display:flex;align-items:center;justify-content:center;gap:6px;margin-bottom:18px}
+.sales-dot{height:6px;width:24px;border-radius:100px;background:rgba(255,255,255,0.1);transition:all .3s}
+.sales-dot.active{width:36px;background:linear-gradient(135deg,#00D4FF,#7B2FFF)}
+.sales-dot.done{background:rgba(0,212,255,0.4)}
+.sales-title{font-size:20px;font-weight:800;letter-spacing:-0.02em;color:#F5F5F7;text-align:center;margin-bottom:18px}
+.sales-btn-row{display:flex;gap:10px;margin-top:8px}
+.sales-back-btn{flex-shrink:0;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);color:#A1A1A6;border-radius:100px;padding:0 22px;font-family:'Manrope',sans-serif;font-size:15px;font-weight:600;cursor:pointer;transition:all .2s}
+.sales-back-btn:hover{border-color:rgba(255,255,255,0.2);color:#F5F5F7}
+select.form-input{appearance:none;-webkit-appearance:none;-moz-appearance:none;cursor:pointer;background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8' fill='none'%3E%3Cpath d='M1 1.5L6 6.5L11 1.5' stroke='%236E6E73' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 16px center;padding-right:40px}
+select.form-input option{background:#111126;color:#F5F5F7}
+textarea.form-input{min-height:88px;resize:vertical;font-family:'Manrope',sans-serif;line-height:1.5}
+
 /* TESTIMONIALS */
 .testi-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
 .testi-card{background:#0d0d1a;border:1px solid rgba(255,255,255,0.08);border-radius:20px;padding:32px;transition:border-color .3s,transform .3s}
@@ -609,6 +622,191 @@ function DemoForm({ onClose }) {
         {loading ? "Connecting..." : "Get a Live Demo Call →"}
       </button>
       <p className="form-note">🔒 No spam. No credit card. Demo call arrives within 30 seconds.</p>
+    </div>
+  );
+}
+
+// ── Contact Sales (Elite) ───────────────────────────────────────────────────
+const SALES_INDUSTRIES = ["Marketing Agency", "B2B SaaS", "Mortgage Broker", "Recruitment", "Finance", "Real Estate", "Healthcare", "Other"];
+const SALES_SIZES = ["1-10", "11-50", "51-200", "201-500", "500+"];
+const SALES_PLATFORMS = ["Voice agent", "WhatsApp", "SMS", "All channels"];
+
+function ContactSalesForm({ onClose }) {
+  const [step, setStep] = useState(1);
+  const [f, setF] = useState({
+    companyWebsite: "", businessEmail: "",
+    firstName: "", lastName: "", companyName: "",
+    industry: "", companySize: "",
+    country: "", countryCode: "+44", phone: "",
+    platformInterest: "", useCase: "", heardAbout: "",
+  });
+  const [errs, setErrs] = useState({});
+  const [loading, setLoading] = useState(false);
+  const [done, setDone] = useState(false);
+  const [error, setError] = useState(false);
+
+  const emailOk = v => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
+  const ch = (k, v) => { setF(p => ({ ...p, [k]: v })); if (errs[k]) setErrs(p => ({ ...p, [k]: undefined })); };
+
+  const step1Valid = emailOk(f.businessEmail.trim());
+  const step2Valid = !!(
+    f.firstName.trim() && f.lastName.trim() && f.companyName.trim() &&
+    f.industry && f.companySize && f.country.trim() && f.phone.trim() && f.useCase.trim()
+  );
+
+  const next = () => {
+    const e = {};
+    if (!step1Valid) e.businessEmail = "Valid email required";
+    if (Object.keys(e).length) { setErrs(e); return; }
+    setErrs({}); setStep(2);
+  };
+
+  const submit = async () => {
+    const e = {};
+    if (!f.firstName.trim()) e.firstName = "Required";
+    if (!f.lastName.trim()) e.lastName = "Required";
+    if (!f.companyName.trim()) e.companyName = "Required";
+    if (!f.industry) e.industry = "Required";
+    if (!f.companySize) e.companySize = "Required";
+    if (!f.country.trim()) e.country = "Required";
+    if (!f.phone.trim()) e.phone = "Required";
+    if (!f.useCase.trim()) e.useCase = "Required";
+    if (Object.keys(e).length) { setErrs(e); return; }
+    setErrs({}); setError(false); setLoading(true);
+    try {
+      const res = await fetch(`${API_URL}/api/sales-lead`, {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          companyWebsite: f.companyWebsite,
+          businessEmail: f.businessEmail,
+          firstName: f.firstName,
+          lastName: f.lastName,
+          companyName: f.companyName,
+          industry: f.industry,
+          companySize: f.companySize,
+          country: f.country,
+          phone: `${f.countryCode}${f.phone}`,
+          platformInterest: f.platformInterest,
+          useCase: f.useCase,
+          heardAbout: f.heardAbout,
+        }),
+      });
+      if (!res.ok) throw new Error("API error");
+      setDone(true);
+    } catch {
+      setError(true);
+    } finally { setLoading(false); }
+  };
+
+  if (done) return (
+    <div className="success-state">
+      <div style={{ fontSize: 52, marginBottom: 16 }}>✅</div>
+      <div style={{ fontSize: 22, fontWeight: 800, marginBottom: 8, color: "#F5F5F7" }}>Thanks — our team will be in touch shortly.</div>
+      <p style={{ fontSize: 15, color: "#A1A1A6", marginBottom: 24 }}>We've received your Elite enquiry and will reach out to {f.businessEmail} soon.</p>
+      {onClose && <button className="btn-primary" style={{ margin: "0 auto", display: "inline-flex" }} onClick={onClose}>Close ✕</button>}
+    </div>
+  );
+
+  return (
+    <div>
+      <div className="sales-progress">
+        <div className={"sales-dot" + (step === 1 ? " active" : " done")} />
+        <div className={"sales-dot" + (step === 2 ? " active" : "")} />
+      </div>
+      <h3 className="sales-title">{step === 1 ? "Contact sales" : "Tell us about yourself"}</h3>
+
+      {step === 1 && (
+        <div>
+          <div className="form-group">
+            <label className="form-label">Company Website</label>
+            <input className="form-input" placeholder="https://yourcompany.com" value={f.companyWebsite} onChange={e => ch("companyWebsite", e.target.value)} />
+          </div>
+          <div className="form-group">
+            <label className="form-label">Business Email <span>*</span></label>
+            <input className={"form-input" + (errs.businessEmail ? " err" : "")} type="email" placeholder="you@company.com" value={f.businessEmail} onChange={e => ch("businessEmail", e.target.value)} />
+            {errs.businessEmail && <div className="field-err">{errs.businessEmail}</div>}
+          </div>
+          <button className="form-submit" onClick={next} disabled={!step1Valid}>Next →</button>
+          <p className="form-note">🔒 We'll only use this to discuss your Elite plan.</p>
+        </div>
+      )}
+
+      {step === 2 && (
+        <div>
+          <div className="form-row">
+            <div className="form-group">
+              <label className="form-label">First Name <span>*</span></label>
+              <input className={"form-input" + (errs.firstName ? " err" : "")} placeholder="Jane" value={f.firstName} onChange={e => ch("firstName", e.target.value)} />
+              {errs.firstName && <div className="field-err">{errs.firstName}</div>}
+            </div>
+            <div className="form-group">
+              <label className="form-label">Last Name <span>*</span></label>
+              <input className={"form-input" + (errs.lastName ? " err" : "")} placeholder="Smith" value={f.lastName} onChange={e => ch("lastName", e.target.value)} />
+              {errs.lastName && <div className="field-err">{errs.lastName}</div>}
+            </div>
+          </div>
+          <div className="form-group">
+            <label className="form-label">Company Name <span>*</span></label>
+            <input className={"form-input" + (errs.companyName ? " err" : "")} placeholder="Acme Ltd" value={f.companyName} onChange={e => ch("companyName", e.target.value)} />
+            {errs.companyName && <div className="field-err">{errs.companyName}</div>}
+          </div>
+          <div className="form-row">
+            <div className="form-group">
+              <label className="form-label">Industry <span>*</span></label>
+              <select className={"form-input" + (errs.industry ? " err" : "")} value={f.industry} onChange={e => ch("industry", e.target.value)}>
+                <option value="">Select…</option>
+                {SALES_INDUSTRIES.map(o => <option key={o} value={o}>{o}</option>)}
+              </select>
+              {errs.industry && <div className="field-err">{errs.industry}</div>}
+            </div>
+            <div className="form-group">
+              <label className="form-label">Company Size <span>*</span></label>
+              <select className={"form-input" + (errs.companySize ? " err" : "")} value={f.companySize} onChange={e => ch("companySize", e.target.value)}>
+                <option value="">Select…</option>
+                {SALES_SIZES.map(o => <option key={o} value={o}>{o}</option>)}
+              </select>
+              {errs.companySize && <div className="field-err">{errs.companySize}</div>}
+            </div>
+          </div>
+          <div className="form-group">
+            <label className="form-label">Country <span>*</span></label>
+            <input className={"form-input" + (errs.country ? " err" : "")} placeholder="United Kingdom" value={f.country} onChange={e => ch("country", e.target.value)} />
+            {errs.country && <div className="field-err">{errs.country}</div>}
+          </div>
+          <div className="form-group">
+            <label className="form-label">Phone <span>*</span></label>
+            <div className="phone-wrap">
+              <CountrySelect value={f.countryCode} onChange={v => ch("countryCode", v)} />
+              <input className={"form-input" + (errs.phone ? " err" : "")} placeholder="7700 000000" value={f.phone} onChange={e => ch("phone", e.target.value)} style={{ flex: 1 }} />
+            </div>
+            {errs.phone && <div className="field-err">{errs.phone}</div>}
+          </div>
+          <div className="form-group">
+            <label className="form-label">Which platform are you most interested in?</label>
+            <select className="form-input" value={f.platformInterest} onChange={e => ch("platformInterest", e.target.value)}>
+              <option value="">Select…</option>
+              {SALES_PLATFORMS.map(o => <option key={o} value={o}>{o}</option>)}
+            </select>
+          </div>
+          <div className="form-group">
+            <label className="form-label">Use case <span>*</span></label>
+            <textarea className={"form-input" + (errs.useCase ? " err" : "")} placeholder="Tell us more about your use case" value={f.useCase} onChange={e => ch("useCase", e.target.value)} rows={3} />
+            {errs.useCase && <div className="field-err">{errs.useCase}</div>}
+          </div>
+          <div className="form-group">
+            <label className="form-label">How did you hear about us?</label>
+            <input className="form-input" placeholder="Google, referral, social…" value={f.heardAbout} onChange={e => ch("heardAbout", e.target.value)} />
+          </div>
+
+          <div className="sales-btn-row">
+            <button type="button" className="sales-back-btn" onClick={() => setStep(1)}>← Back</button>
+            <button className="form-submit" style={{ marginTop: 0, flex: 1 }} onClick={submit} disabled={loading || !step2Valid}>
+              {loading ? "Sending…" : "Submit"}
+            </button>
+          </div>
+          {error && <p className="form-note" style={{ color: "#FF453A" }}>Something went wrong. Please email <a href="mailto:info@mybizpal.ai" style={{ color: "#00D4FF" }}>info@mybizpal.ai</a></p>}
+        </div>
+      )}
     </div>
   );
 }
@@ -954,8 +1152,12 @@ export default function App() {
   const [checkoutError, setCheckoutError] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
 
+  const [salesOpen, setSalesOpen] = useState(false);
+
   const openModal = () => { setModalOpen(true); document.body.style.overflow = "hidden"; };
   const closeModal = () => { setModalOpen(false); document.body.style.overflow = ""; };
+  const openSales = () => { setSalesOpen(true); document.body.style.overflow = "hidden"; };
+  const closeSales = () => { setSalesOpen(false); document.body.style.overflow = ""; };
 
   const handleCheckout = async (planKey, billingCycle) => {
     setCheckoutLoading(planKey); setCheckoutError(null);
@@ -990,7 +1192,7 @@ export default function App() {
 
   // Close modal on Escape
   useEffect(() => {
-    const h = (e) => { if (e.key === "Escape") closeModal(); };
+    const h = (e) => { if (e.key === "Escape") { closeModal(); closeSales(); } };
     window.addEventListener("keydown", h);
     return () => window.removeEventListener("keydown", h);
   }, []);
@@ -1315,7 +1517,7 @@ export default function App() {
               <ul className="p-feats">{p.features.map(f => <li key={f}><span className="p-check">✓</span>{f}</li>)}</ul>
               <button
                 className={p.featured ? "p-btn-grad" : "p-btn-outline"}
-                onClick={() => handleCheckout(p.key, billing)}
+                onClick={() => p.key === "elite" ? openSales() : handleCheckout(p.key, billing)}
                 disabled={checkoutLoading === p.key}
                 style={{ cursor: checkoutLoading === p.key ? "wait" : "pointer" }}
               >
@@ -1435,6 +1637,19 @@ export default function App() {
           </div>
           <div className="modal-body">
             <DemoForm onClose={closeModal} />
+          </div>
+        </div>
+      </div>
+
+      {/* CONTACT SALES MODAL (Elite) */}
+      <div className={"modal-overlay" + (salesOpen ? " open" : "")} onClick={e => { if (e.target === e.currentTarget) closeSales(); }}>
+        <div className="modal-box">
+          <div className="modal-header" style={{ alignItems: "center", paddingBottom: 8 }}>
+            <img src={LOGO_FULL} alt="MyBizPal" style={{ height: 30, width: "auto" }} />
+            <button className="modal-close" onClick={closeSales}>✕</button>
+          </div>
+          <div className="modal-body">
+            <ContactSalesForm onClose={closeSales} />
           </div>
         </div>
       </div>
