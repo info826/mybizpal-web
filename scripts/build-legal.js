@@ -59,6 +59,12 @@ if (missing.length > 0) {
 // Escape a string for use as a literal in a RegExp.
 const escapeRegExp = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
+// MyBizPal favicon links, injected into each page's <head> after the <title> so every
+// legal page (and any future page added to FILES) shows the logo in the browser tab.
+const FAVICON_LINKS =
+  '\n<link rel="icon" type="image/png" href="https://res.cloudinary.com/dp8novljz/image/upload/c_fit,w_32,h_32/v1780837471/MyBizPal_Logo_Light_BG.png" />' +
+  '\n<link rel="apple-touch-icon" href="https://res.cloudinary.com/dp8novljz/image/upload/c_fit,w_180,h_180/v1780837471/MyBizPal_Logo_Light_BG.png" />';
+
 let hadUnreplaced = false;
 
 for (const file of FILES) {
@@ -74,6 +80,11 @@ for (const file of FILES) {
 
   for (const [token, envName] of Object.entries(TOKEN_ENV)) {
     html = html.replace(new RegExp(escapeRegExp(token), "g"), process.env[envName]);
+  }
+
+  // Ensure the favicon links are present (idempotent — skip if already in the source head).
+  if (!html.includes("apple-touch-icon")) {
+    html = html.replace(/<\/title>/i, `</title>${FAVICON_LINKS}`);
   }
 
   writeFileSync(path, html, "utf8");
