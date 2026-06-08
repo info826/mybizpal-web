@@ -341,6 +341,11 @@ h1,h2,h3{font-family:'Manrope',sans-serif;line-height:1.1;letter-spacing:-0.03em
 select.form-input{appearance:none;-webkit-appearance:none;-moz-appearance:none;cursor:pointer;background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8' fill='none'%3E%3Cpath d='M1 1.5L6 6.5L11 1.5' stroke='%236E6E73' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 16px center;padding-right:40px}
 select.form-input option{background:#111126;color:#F5F5F7}
 textarea.form-input{min-height:88px;resize:vertical;font-family:'Manrope',sans-serif;line-height:1.5}
+.plat-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.plat-opt{display:flex;align-items:center;gap:9px;padding:10px 12px;border:1px solid rgba(255,255,255,0.08);border-radius:10px;background:rgba(255,255,255,0.04);font-size:13px;color:#A1A1A6;cursor:pointer;transition:all .2s;user-select:none}
+.plat-opt:hover{border-color:rgba(0,212,255,0.4)}
+.plat-opt.on{border-color:rgba(0,212,255,0.5);background:rgba(0,212,255,0.06);color:#F5F5F7}
+.plat-opt input{accent-color:#00D4FF;width:15px;height:15px;cursor:pointer;flex-shrink:0;margin:0}
 
 /* TESTIMONIALS */
 .testi-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
@@ -627,9 +632,10 @@ function DemoForm({ onClose }) {
 }
 
 // ── Contact Sales (Elite) ───────────────────────────────────────────────────
-const SALES_INDUSTRIES = ["Marketing Agency", "B2B SaaS", "Mortgage Broker", "Recruitment", "Finance", "Real Estate", "Healthcare", "Other"];
+const SALES_INDUSTRIES = ["Marketing Agency", "B2B SaaS", "Mortgage Broker", "Recruitment", "Finance", "Real Estate", "Healthcare", "Legal", "Insurance", "Accounting", "Construction", "Hospitality", "E-commerce / Retail", "Education", "Automotive", "Professional Services", "Fitness & Wellness", "Dental / Medical Practice", "Other"];
 const SALES_SIZES = ["1-10", "11-50", "51-200", "201-500", "500+"];
-const SALES_PLATFORMS = ["Voice agent", "WhatsApp", "SMS", "All channels"];
+const SALES_PLATFORMS = ["Voice agent", "WhatsApp", "SMS", "Google Calendar booking", "GoHighLevel", "HubSpot", "N8N automations", "Outbound calling", "Website chat widget", "All channels"];
+const SALES_COUNTRIES = ["Afghanistan", "Albania", "Algeria", "Andorra", "Angola", "Antigua and Barbuda", "Argentina", "Armenia", "Australia", "Austria", "Azerbaijan", "Bahamas", "Bahrain", "Bangladesh", "Barbados", "Belarus", "Belgium", "Belize", "Benin", "Bhutan", "Bolivia", "Bosnia and Herzegovina", "Botswana", "Brazil", "Brunei", "Bulgaria", "Burkina Faso", "Burundi", "Cabo Verde", "Cambodia", "Cameroon", "Canada", "Central African Republic", "Chad", "Chile", "China", "Colombia", "Comoros", "Congo (Brazzaville)", "Congo (Kinshasa)", "Costa Rica", "Côte d'Ivoire", "Croatia", "Cuba", "Cyprus", "Czechia", "Denmark", "Djibouti", "Dominica", "Dominican Republic", "Ecuador", "Egypt", "El Salvador", "Equatorial Guinea", "Eritrea", "Estonia", "Eswatini", "Ethiopia", "Fiji", "Finland", "France", "Gabon", "Gambia", "Georgia", "Germany", "Ghana", "Greece", "Grenada", "Guatemala", "Guinea", "Guinea-Bissau", "Guyana", "Haiti", "Honduras", "Hungary", "Iceland", "India", "Indonesia", "Iran", "Iraq", "Ireland", "Israel", "Italy", "Jamaica", "Japan", "Jordan", "Kazakhstan", "Kenya", "Kiribati", "Kosovo", "Kuwait", "Kyrgyzstan", "Laos", "Latvia", "Lebanon", "Lesotho", "Liberia", "Libya", "Liechtenstein", "Lithuania", "Luxembourg", "Madagascar", "Malawi", "Malaysia", "Maldives", "Mali", "Malta", "Marshall Islands", "Mauritania", "Mauritius", "Mexico", "Micronesia", "Moldova", "Monaco", "Mongolia", "Montenegro", "Morocco", "Mozambique", "Myanmar", "Namibia", "Nauru", "Nepal", "Netherlands", "New Zealand", "Nicaragua", "Niger", "Nigeria", "North Korea", "North Macedonia", "Norway", "Oman", "Pakistan", "Palau", "Palestine", "Panama", "Papua New Guinea", "Paraguay", "Peru", "Philippines", "Poland", "Portugal", "Qatar", "Romania", "Russia", "Rwanda", "Saint Kitts and Nevis", "Saint Lucia", "Saint Vincent and the Grenadines", "Samoa", "San Marino", "São Tomé and Príncipe", "Saudi Arabia", "Senegal", "Serbia", "Seychelles", "Sierra Leone", "Singapore", "Slovakia", "Slovenia", "Solomon Islands", "Somalia", "South Africa", "South Korea", "South Sudan", "Spain", "Sri Lanka", "Sudan", "Suriname", "Sweden", "Switzerland", "Syria", "Taiwan", "Tajikistan", "Tanzania", "Thailand", "Timor-Leste", "Togo", "Tonga", "Trinidad and Tobago", "Tunisia", "Turkey", "Turkmenistan", "Tuvalu", "Uganda", "Ukraine", "United Arab Emirates", "United Kingdom", "United States", "Uruguay", "Uzbekistan", "Vanuatu", "Vatican City", "Venezuela", "Vietnam", "Yemen", "Zambia", "Zimbabwe"];
 
 function ContactSalesForm({ onClose }) {
   const [step, setStep] = useState(1);
@@ -637,8 +643,8 @@ function ContactSalesForm({ onClose }) {
     companyWebsite: "", businessEmail: "",
     firstName: "", lastName: "", companyName: "",
     industry: "", companySize: "",
-    country: "", countryCode: "+44", phone: "",
-    platformInterest: "", useCase: "", heardAbout: "",
+    country: "United Kingdom", countryCode: "+44", phone: "",
+    platformInterest: [], useCase: "", heardAbout: "",
   });
   const [errs, setErrs] = useState({});
   const [loading, setLoading] = useState(false);
@@ -647,6 +653,12 @@ function ContactSalesForm({ onClose }) {
 
   const emailOk = v => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
   const ch = (k, v) => { setF(p => ({ ...p, [k]: v })); if (errs[k]) setErrs(p => ({ ...p, [k]: undefined })); };
+  const togglePlatform = v => setF(p => ({
+    ...p,
+    platformInterest: p.platformInterest.includes(v)
+      ? p.platformInterest.filter(x => x !== v)
+      : [...p.platformInterest, v],
+  }));
 
   const step1Valid = emailOk(f.businessEmail.trim());
   const step2Valid = !!(
@@ -686,7 +698,7 @@ function ContactSalesForm({ onClose }) {
           companySize: f.companySize,
           country: f.country,
           phone: `${f.countryCode}${f.phone}`,
-          platformInterest: f.platformInterest,
+          platformInterest: f.platformInterest.join(", "),
           useCase: f.useCase,
           heardAbout: f.heardAbout,
         }),
@@ -770,7 +782,10 @@ function ContactSalesForm({ onClose }) {
           </div>
           <div className="form-group">
             <label className="form-label">Country <span>*</span></label>
-            <input className={"form-input" + (errs.country ? " err" : "")} placeholder="United Kingdom" value={f.country} onChange={e => ch("country", e.target.value)} />
+            <select className={"form-input" + (errs.country ? " err" : "")} value={f.country} onChange={e => ch("country", e.target.value)}>
+              <option value="">Select…</option>
+              {SALES_COUNTRIES.map(o => <option key={o} value={o}>{o}</option>)}
+            </select>
             {errs.country && <div className="field-err">{errs.country}</div>}
           </div>
           <div className="form-group">
@@ -783,10 +798,14 @@ function ContactSalesForm({ onClose }) {
           </div>
           <div className="form-group">
             <label className="form-label">Which platform are you most interested in?</label>
-            <select className="form-input" value={f.platformInterest} onChange={e => ch("platformInterest", e.target.value)}>
-              <option value="">Select…</option>
-              {SALES_PLATFORMS.map(o => <option key={o} value={o}>{o}</option>)}
-            </select>
+            <div className="plat-grid">
+              {SALES_PLATFORMS.map(o => (
+                <label key={o} className={"plat-opt" + (f.platformInterest.includes(o) ? " on" : "")}>
+                  <input type="checkbox" checked={f.platformInterest.includes(o)} onChange={() => togglePlatform(o)} />
+                  <span>{o}</span>
+                </label>
+              ))}
+            </div>
           </div>
           <div className="form-group">
             <label className="form-label">Use case <span>*</span></label>
