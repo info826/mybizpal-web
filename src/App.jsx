@@ -56,7 +56,7 @@ const PRICES = {
 
 const PLANS = [
   {
-    key:"starter",tier:"Starter",setup:"399",monthly:"297",yearly:"238",featured:false,cta:"Get Started",
+    key:"starter",tier:"Starter",setup:"399",monthly:"297",yearly:"238",featured:false,trial:true,cta:"Get Started",
     roi:"Pays back from ~1 recovered lead/mo",
     features:["1 local UK number","1,000 call minutes/mo","Inbound call handling","Calendar integration & booking","FAQ automation","WhatsApp auto-replies","Lead capture & CRM sync","Email support"],
   },
@@ -362,6 +362,7 @@ h1,h2,h3{font-family:'Manrope',sans-serif;line-height:1.1;letter-spacing:-0.03em
 .p-card{background:#0d0d1a;border:1px solid rgba(255,255,255,0.08);border-radius:24px;padding:36px;transition:border-color .3s;position:relative;overflow:hidden;display:flex;flex-direction:column}
 .p-card.featured{border-color:rgba(0,212,255,0.35);background:linear-gradient(160deg,rgba(0,212,255,0.05),rgba(123,47,255,0.05),#0d0d1a)}
 .p-badge{position:absolute;top:-1px;right:28px;background:linear-gradient(135deg,#00D4FF,#7B2FFF);color:#000;font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;padding:4px 14px;border-radius:0 0 10px 10px}
+.p-trial-badge{position:absolute;top:-1px;left:28px;background:linear-gradient(135deg,#D946EF,#A21CAF);color:#fff;font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;padding:4px 14px;border-radius:0 0 10px 10px}
 .p-tier{font-size:12px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:#6E6E73;margin-bottom:14px}
 .p-price{font-family:'Manrope',sans-serif;font-size:52px;font-weight:800;letter-spacing:-0.05em;line-height:1;margin-bottom:4px;color:#F5F5F7}
 .p-price sup{font-size:22px;vertical-align:super}
@@ -948,7 +949,7 @@ function VideoBox({ label, title, subtitle, duration, accentColor = "#00D4FF" })
 export default function App() {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
-  const [billing, setBilling] = useState("monthly");
+  const [billing, setBilling] = useState("yearly");
   const [checkoutLoading, setCheckoutLoading] = useState(null);
   const [checkoutError, setCheckoutError] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
@@ -1286,7 +1287,7 @@ export default function App() {
         <div className="mb64" style={{ textAlign: "center" }}>
           <div className="eyebrow">Pricing</div>
           <h2 className="section-h" style={{ textAlign: "center" }}>Cheaper than one missed call.<br /><span className="grad-text">Better than a full-time hire.</span></h2>
-          <p className="section-sub" style={{ margin: "0 auto 32px", textAlign: "center" }}>No hidden fees. Cancel any time. Pays for itself in one booking.</p>
+          <p className="section-sub" style={{ margin: "0 auto 32px", textAlign: "center" }}>No hidden fees. Cancel renewal any time. Pays for itself in one booking.</p>
           <div className="billing-toggle">
             <span className={"billing-label" + (billing === "monthly" ? " active" : "")} onClick={() => setBilling("monthly")}>Monthly</span>
             <div className={"toggle-track" + (billing === "yearly" ? " on" : "")} onClick={() => setBilling(billing === "monthly" ? "yearly" : "monthly")}>
@@ -1301,6 +1302,7 @@ export default function App() {
           {PLANS.map(p => (
             <div className={"p-card" + (p.featured ? " featured" : "")} key={p.tier}>
               {p.featured && <div className="p-badge">Most Popular</div>}
+              {p.trial && <div className="p-trial-badge">7-Day Free Trial</div>}
               <div className="p-tier">{p.tier}</div>
               <div className="p-price"><sup>£</sup>{billing === "yearly" ? p.yearly : p.monthly}</div>
               <div className="p-period">{billing === "yearly" ? "/ mo, billed annually" : "/ month"}</div>
