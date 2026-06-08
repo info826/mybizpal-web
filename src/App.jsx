@@ -56,17 +56,17 @@ const PRICES = {
 
 const PLANS = [
   {
-    key:"starter",tier:"Starter",setup:"399",monthly:"149",yearly:"119",featured:false,cta:"Get Started",
+    key:"starter",tier:"Starter",setup:"399",monthly:"297",yearly:"238",featured:false,cta:"Get Started",
     roi:"Pays back from ~1 recovered lead/mo",
     features:["1 local UK number","1,000 call minutes/mo","Inbound call handling","Calendar integration & booking","FAQ automation","WhatsApp auto-replies","Lead capture & CRM sync","Email support"],
   },
   {
-    key:"pro",tier:"Pro",setup:"799",monthly:"349",yearly:"279",featured:true,cta:"Get Started",
+    key:"pro",tier:"Pro",setup:"799",monthly:"597",yearly:"478",featured:true,cta:"Get Started",
     roi:"Avg. client recovers £2,400/mo",
     features:["Everything in Starter","3,000 call minutes/mo","Outbound calling & follow-ups","Multi-calendar support","CRM & webhook integrations","GoHighLevel / HubSpot sync","N8N custom automations","Custom voice & AI name","Priority support"],
   },
   {
-    key:"elite",tier:"Elite",setup:"1,499",monthly:"799",yearly:"639",featured:false,cta:"Get Started",
+    key:"elite",tier:"Elite",setup:"1,499",monthly:"1197",yearly:"958",featured:false,cta:"Get Started",
     roi:"Clients avg. 12–20× ROI in 90 days",
     features:["Everything in Pro","10,000 call minutes/mo","Backend dashboard access","Full AI persona customisation","Dead lead reactivation","White-label option","Dedicated account manager","SLA guarantee + 30-day money back"],
   },
