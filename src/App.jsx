@@ -425,13 +425,13 @@ textarea.form-input{min-height:88px;resize:vertical;font-family:'Manrope',sans-s
 
 /* FOOTER */
 .footer{border-top:1px solid rgba(255,255,255,0.08);padding:72px 48px 40px;position:relative;z-index:1}
-.footer-grid{display:grid;grid-template-columns:2.2fr 1fr 1fr 1fr;gap:48px;margin-bottom:56px}
+.footer-grid{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:48px;margin-bottom:56px}
 .footer-brand-desc{font-size:14px;color:#6E6E73;line-height:1.7;font-weight:300;margin-top:16px;max-width:260px}
 .footer-col-title{font-size:11px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:#6E6E73;margin-bottom:18px}
 .footer-links{list-style:none;display:flex;flex-direction:column;gap:11px}
 .footer-links a{color:#A1A1A6;text-decoration:none;font-size:14px;transition:color .2s}
 .footer-links a:hover{color:#F5F5F7}
-.footer-disclosure{max-width:760px;margin:0 auto 40px;padding:24px 28px;background:rgba(0,212,255,0.04);border:1px solid rgba(0,212,255,0.16);border-radius:16px}
+.footer-disclosure{margin:0 0 40px;padding:24px 28px;background:rgba(0,212,255,0.04);border:1px solid rgba(0,212,255,0.16);border-radius:16px}
 .footer-disclosure-title{font-size:13px;font-weight:700;letter-spacing:0.04em;color:#00D4FF;margin-bottom:10px}
 .footer-disclosure p{font-size:13px;color:#A1A1A6;line-height:1.7;font-weight:300}
 .footer-disclosure a{color:#00D4FF;text-decoration:underline}
