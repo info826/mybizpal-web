@@ -431,6 +431,10 @@ textarea.form-input{min-height:88px;resize:vertical;font-family:'Manrope',sans-s
 .footer-links{list-style:none;display:flex;flex-direction:column;gap:11px}
 .footer-links a{color:#A1A1A6;text-decoration:none;font-size:14px;transition:color .2s}
 .footer-links a:hover{color:#F5F5F7}
+.footer-disclosure{max-width:760px;margin:0 auto 40px;padding:24px 28px;background:rgba(0,212,255,0.04);border:1px solid rgba(0,212,255,0.16);border-radius:16px}
+.footer-disclosure-title{font-size:13px;font-weight:700;letter-spacing:0.04em;color:#00D4FF;margin-bottom:10px}
+.footer-disclosure p{font-size:13px;color:#A1A1A6;line-height:1.7;font-weight:300}
+.footer-disclosure a{color:#00D4FF;text-decoration:underline}
 .footer-bottom{display:flex;align-items:center;justify-content:space-between;padding-top:32px;border-top:1px solid rgba(255,255,255,0.08);flex-wrap:wrap;gap:16px}
 .footer-legal{font-size:12px;color:#6E6E73;line-height:1.7}
 .footer-socials{display:flex;gap:10px}
@@ -1752,6 +1756,19 @@ export default function App() {
               <li><a href="/acceptable-use">Acceptable Use</a></li>
             </ul>
           </div>
+        </div>
+        <div className="footer-disclosure">
+          <div className="footer-disclosure-title">How MyBizPal uses Google data</div>
+          <p>
+            MyBizPal is an AI assistant platform for businesses. It connects to Google services,
+            including Gmail and Google Calendar, to send appointment confirmations, reminders, and
+            notifications, and to manage bookings on behalf of the business. We only access this data
+            to provide these features and never sell it. MyBizPal's use of information received from
+            Google APIs adheres to the{" "}
+            <a href="https://developers.google.com/terms/api-services-user-data-policy" target="_blank" rel="noreferrer">
+              Google API Services User Data Policy
+            </a>, including the Limited Use requirements.
+          </p>
         </div>
         <div className="footer-bottom">
           <div className="footer-legal">

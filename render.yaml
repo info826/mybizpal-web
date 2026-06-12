@@ -1,4 +1,4 @@
-services:
+ services:
   - type: web
     name: mybizpal-web
     env: static
