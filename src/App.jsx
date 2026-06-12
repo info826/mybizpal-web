@@ -8,6 +8,13 @@ const LOGO_ICON = "https://res.cloudinary.com/dp8novljz/image/upload/MyBizPal_Fu
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
 const WA_NUMBER = import.meta.env.VITE_WA_NUMBER || "447360280655";
 
+// ── Stripe checkout links (new 4-tier pricing) ───────────────────────────────
+// TODO: replace these placeholders with the live Stripe payment links before launch.
+const STRIPE_STARTER_MONTHLY_URL = "https://buy.stripe.com/TODO_starter_monthly"; // TODO: Starter £197/mo
+const STRIPE_STARTER_ANNUAL_URL  = "https://buy.stripe.com/TODO_starter_annual";  // TODO: Starter £158/mo billed annually
+const STRIPE_PRO_MONTHLY_URL     = "https://buy.stripe.com/TODO_pro_monthly";     // TODO: Pro £497/mo (+£299 setup)
+const STRIPE_PRO_ANNUAL_URL      = "https://buy.stripe.com/TODO_pro_annual";      // TODO: Pro £397/mo billed annually (setup waived)
+
 // ── Integration logos (Cloudinary-hosted, trimmed & fitted to 72px height) ───
 const CLD = "https://res.cloudinary.com/dp8novljz/image/upload/f_auto,q_auto,e_trim,h_72,c_fit";
 const INTEGRATIONS = [
@@ -48,21 +55,38 @@ const PRICES = {
   elite:  {setup:"price_1TbRjhEeQsMUUSovnIb8Qzbi",monthly:"price_1TbRluEeQsMUUSovw7IX1uCE",annual:"price_1TbRsVEeQsMUUSovSx7v82k2"},
 };
 
+// desktopOrder = left→right on wide screens (Exclusive, Elite, Pro, Starter).
+// mobileOrder  = top→bottom when stacked (Pro, Starter, Elite, Exclusive).
 const PLANS = [
   {
-    key:"starter",tier:"Starter",setup:"399",monthly:"297",yearly:"238",featured:false,trial:true,cta:"Start your 7-day free trial",
+    key:"starter",tier:"Starter",tagline:"Never miss a call.",
+    featured:false,trial:"7-Day Free Trial",monthly:"197",annual:"158",setup:null,
+    desktopOrder:4,mobileOrder:2,cta:"Start 7-day free trial",
     roi:"Pays back from ~1 recovered lead/mo",
-    features:["1 local UK number","1,000 call minutes/mo","Inbound call handling","Calendar integration & booking","FAQ automation","WhatsApp auto-replies","Lead capture & CRM sync","Email support"],
+    features:["Inbound call answering","WhatsApp conversations","Google Calendar booking","FAQ & customer service","Call recordings & transcripts","Basic analytics","500 voice minutes/mo (unlimited WhatsApp, fair use)"],
+    locked:"Unlock with Pro: Outbound calling & lead qualification",
   },
   {
-    key:"pro",tier:"Pro",setup:"799",monthly:"597",yearly:"478",featured:true,cta:"Get Started",
+    key:"pro",tier:"Pro",tagline:"Your AI sales & service team.",
+    featured:true,trial:"14-Day Free Trial",monthly:"497",annual:"397",setup:"299",
+    desktopOrder:3,mobileOrder:1,cta:"Start 14-day free trial",
     roi:"Avg. client recovers £2,400/mo",
-    features:["Everything in Starter","3,000 call minutes/mo","Outbound calling & follow-ups","Multi-calendar support","CRM & webhook integrations","GoHighLevel / HubSpot sync","N8N custom automations","Custom voice & AI name","Priority support"],
+    features:["Everything in Starter","SMS & email integration","Slack notifications","Outbound calling","Lead input & qualification","1 CRM integration","Unlimited calling (fair use)"],
+    locked:"Unlock with Elite: Outbound campaigns at scale, full CRM suite & closer briefings",
   },
   {
-    key:"elite",tier:"Elite",setup:"1,499",monthly:"1197",yearly:"958",featured:false,cta:"Contact Sales",
-    roi:"Clients avg. 12–20× ROI in 90 days",
-    features:["Everything in Pro","10,000 call minutes/mo","Backend dashboard access","Full AI persona customisation","Dead lead reactivation","White-label option","Dedicated account manager","SLA guarantee + 30-day money back"],
+    key:"elite",tier:"Elite",tagline:"A revenue engine that never sleeps.",
+    featured:false,contactSales:true,desktopOrder:2,mobileOrder:3,cta:"Contact Sales",
+    roi:"Less than a quarter the cost of one SDR (£50k+/yr).",
+    features:["Everything in Pro","Outbound campaigns at scale","Full CRM integrations","Closer briefings","Advanced analytics","Multilingual","Dedicated account manager","Done-for-you onboarding"],
+    locked:"Unlock with Exclusive: White-label, multi-location & bespoke build",
+  },
+  {
+    key:"exclusive",tier:"Exclusive",tagline:"Built entirely around you.",
+    featured:false,contactSales:true,salesPlan:"exclusive",desktopOrder:1,mobileOrder:4,cta:"Contact Sales",
+    roi:"Less than a quarter the cost of one SDR (£50k+/yr).",
+    features:["Everything in Elite","White-label","Multi-location","Voice cloning / custom voice","Bespoke integrations","White-glove onboarding + SLA"],
+    locked:null,
   },
 ];
 
@@ -92,7 +116,7 @@ const COMPARE_ROWS = [
   ["Backend dashboard",              "❌",                    "❌",                      "✓ Client portal included"],
   ["N8N / custom automations",       "❌",                    "❌ Locked",               "✓ Unlimited workflows"],
   ["UK phone number",                "Yes",                   "❌ US/international",      "✓ Local UK number"],
-  ["Pricing (GBP)",                  "£2k–£3.5k/mo salary",  "£300–£1,500+/mo",         "✓ From £149/mo"],
+  ["Pricing (GBP)",                  "£2k–£3.5k/mo salary",  "£300–£1,500+/mo",         "✓ From £197/mo"],
   ["Setup time",                     "Weeks",                 "2–8 weeks",               "✓ Live in 7 days"],
   ["Performance guarantee",          "❌",                    "❌",                      "✓ 30-day money back"],
 ];
@@ -384,7 +408,9 @@ textarea.form-input{min-height:88px;resize:vertical;font-family:'Manrope',sans-s
 .toggle-thumb{position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:#fff;transition:transform .25s;box-shadow:0 1px 4px rgba(0,0,0,0.3)}
 .toggle-track.on .toggle-thumb{transform:translateX(22px)}
 .save-badge{display:inline-block;background:rgba(0,255,148,0.1);border:1px solid rgba(0,255,148,0.2);color:#00FF94;font-size:11px;font-weight:700;padding:2px 8px;border-radius:100px;letter-spacing:0.06em;text-transform:uppercase;margin-left:6px;vertical-align:middle}
-.pricing-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;align-items:stretch}
+.pricing-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;align-items:stretch}
+.pricing-grid .p-card{order:var(--order-d,0)}
+@media(max-width:1080px) and (min-width:961px){.pricing-grid{grid-template-columns:repeat(2,1fr)}}
 .p-card{background:#0d0d1a;border:1px solid rgba(255,255,255,0.08);border-radius:24px;padding:36px;transition:border-color .3s;position:relative;overflow:hidden;display:flex;flex-direction:column}
 .p-card.featured{border-color:rgba(0,212,255,0.35);background:linear-gradient(160deg,rgba(0,212,255,0.05),rgba(123,47,255,0.05),#0d0d1a)}
 .p-badge{position:absolute;top:-1px;right:28px;background:linear-gradient(135deg,#00D4FF,#7B2FFF);color:#000;font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;padding:4px 14px;border-radius:0 0 10px 10px}
@@ -503,6 +529,7 @@ textarea.form-input{min-height:88px;resize:vertical;font-family:'Manrope',sans-s
   .hero-ctas{flex-direction:column;align-items:stretch}.hero-ctas .btn-primary,.hero-ctas .btn-outline{width:100%;justify-content:center}
   .stats-bar{display:grid;grid-template-columns:1fr 1fr}.stat-item{flex:none;border-right:none;border-bottom:1px solid rgba(255,255,255,0.08)}.stat-item:nth-child(odd){border-right:1px solid rgba(255,255,255,0.08)}.stat-item:nth-last-child(-n+2){border-bottom:none}
   .steps-wrap,.feat-grid,.testi-grid,.pricing-grid,.pain-cards,.industries-grid{grid-template-columns:1fr}
+  .pricing-grid .p-card{order:var(--order-m,0)}
   .calc-body{grid-template-columns:1fr;padding:24px 24px 40px}.calc-left{border-right:none;border-bottom:1px solid rgba(255,255,255,0.08);padding-right:0;padding-bottom:28px;margin-bottom:28px}
   .calc-header{padding:32px 24px 0}
   .compare-section{overflow-x:auto}
@@ -735,7 +762,7 @@ const SALES_SIZES = ["1-10", "11-50", "51-200", "201-500", "500+"];
 const SALES_PLATFORMS = ["Voice agent", "WhatsApp", "SMS", "Google Calendar booking", "GoHighLevel", "HubSpot", "N8N automations", "Outbound calling", "Website chat widget", "All channels"];
 const SALES_COUNTRIES = ["Afghanistan", "Albania", "Algeria", "Andorra", "Angola", "Antigua and Barbuda", "Argentina", "Armenia", "Australia", "Austria", "Azerbaijan", "Bahamas", "Bahrain", "Bangladesh", "Barbados", "Belarus", "Belgium", "Belize", "Benin", "Bhutan", "Bolivia", "Bosnia and Herzegovina", "Botswana", "Brazil", "Brunei", "Bulgaria", "Burkina Faso", "Burundi", "Cabo Verde", "Cambodia", "Cameroon", "Canada", "Central African Republic", "Chad", "Chile", "China", "Colombia", "Comoros", "Congo (Brazzaville)", "Congo (Kinshasa)", "Costa Rica", "Côte d'Ivoire", "Croatia", "Cuba", "Cyprus", "Czechia", "Denmark", "Djibouti", "Dominica", "Dominican Republic", "Ecuador", "Egypt", "El Salvador", "Equatorial Guinea", "Eritrea", "Estonia", "Eswatini", "Ethiopia", "Fiji", "Finland", "France", "Gabon", "Gambia", "Georgia", "Germany", "Ghana", "Greece", "Grenada", "Guatemala", "Guinea", "Guinea-Bissau", "Guyana", "Haiti", "Honduras", "Hungary", "Iceland", "India", "Indonesia", "Iran", "Iraq", "Ireland", "Israel", "Italy", "Jamaica", "Japan", "Jordan", "Kazakhstan", "Kenya", "Kiribati", "Kosovo", "Kuwait", "Kyrgyzstan", "Laos", "Latvia", "Lebanon", "Lesotho", "Liberia", "Libya", "Liechtenstein", "Lithuania", "Luxembourg", "Madagascar", "Malawi", "Malaysia", "Maldives", "Mali", "Malta", "Marshall Islands", "Mauritania", "Mauritius", "Mexico", "Micronesia", "Moldova", "Monaco", "Mongolia", "Montenegro", "Morocco", "Mozambique", "Myanmar", "Namibia", "Nauru", "Nepal", "Netherlands", "New Zealand", "Nicaragua", "Niger", "Nigeria", "North Korea", "North Macedonia", "Norway", "Oman", "Pakistan", "Palau", "Palestine", "Panama", "Papua New Guinea", "Paraguay", "Peru", "Philippines", "Poland", "Portugal", "Qatar", "Romania", "Russia", "Rwanda", "Saint Kitts and Nevis", "Saint Lucia", "Saint Vincent and the Grenadines", "Samoa", "San Marino", "São Tomé and Príncipe", "Saudi Arabia", "Senegal", "Serbia", "Seychelles", "Sierra Leone", "Singapore", "Slovakia", "Slovenia", "Solomon Islands", "Somalia", "South Africa", "South Korea", "South Sudan", "Spain", "Sri Lanka", "Sudan", "Suriname", "Sweden", "Switzerland", "Syria", "Taiwan", "Tajikistan", "Tanzania", "Thailand", "Timor-Leste", "Togo", "Tonga", "Trinidad and Tobago", "Tunisia", "Turkey", "Turkmenistan", "Tuvalu", "Uganda", "Ukraine", "United Arab Emirates", "United Kingdom", "United States", "Uruguay", "Uzbekistan", "Vanuatu", "Vatican City", "Venezuela", "Vietnam", "Yemen", "Zambia", "Zimbabwe"];
 
-function ContactSalesForm({ onClose }) {
+function ContactSalesForm({ onClose, plan = "" }) {
   const [step, setStep] = useState(1);
   const [f, setF] = useState({
     companyWebsite: "", businessEmail: "",
@@ -800,6 +827,7 @@ function ContactSalesForm({ onClose }) {
           platformInterest: f.platformInterest.join(", "),
           useCase: f.useCase,
           heardAbout: f.heardAbout,
+          plan,
         }),
       });
       if (!res.ok) throw new Error("API error");
@@ -938,7 +966,7 @@ function RevenueCalculator({ onOpenModal }) {
   const missedLeads = Math.round(leads * (missedPct / 100));
   const monthlyLeak = Math.round(missedLeads * (closeRate / 100) * jobValue);
   const recovered = Math.round(monthlyLeak * 0.7);
-  const roi = recovered > 0 ? Math.round(recovered / 149) : 0;
+  const roi = recovered > 0 ? Math.round(recovered / 197) : 0;
   const fmt = n => n >= 1000 ? `£${(n / 1000).toFixed(1)}k` : `£${n}`;
 
   const sliderStyle = (val, min, max) => ({
@@ -977,7 +1005,7 @@ function RevenueCalculator({ onOpenModal }) {
             <div className="calc-rows">
               <div className="calc-row"><span className="calc-row-label">Leads missed monthly</span><span className="calc-row-val">{missedLeads}</span></div>
               <div className="calc-row"><span className="calc-row-label">Revenue MyBizPal recovers</span><span className="calc-row-val green">+{fmt(recovered)}/mo</span></div>
-              <div className="calc-row"><span className="calc-row-label">ROI at Starter plan (£149/mo)</span><span className="calc-row-val green">{roi}×</span></div>
+              <div className="calc-row"><span className="calc-row-label">ROI at Starter plan (£197/mo)</span><span className="calc-row-val green">{roi}×</span></div>
             </div>
             <button className="btn-primary" style={{ width: "100%", justifyContent: "center" }} onClick={onOpenModal}>
               Recover This Revenue →
@@ -1270,10 +1298,11 @@ export default function App() {
   const [modalOpen, setModalOpen] = useState(false);
 
   const [salesOpen, setSalesOpen] = useState(false);
+  const [salesPlan, setSalesPlan] = useState("");
 
   const openModal = () => { setModalOpen(true); document.body.style.overflow = "hidden"; };
   const closeModal = () => { setModalOpen(false); document.body.style.overflow = ""; };
-  const openSales = () => { setSalesOpen(true); document.body.style.overflow = "hidden"; };
+  const openSales = (plan = "") => { setSalesPlan(plan); setSalesOpen(true); document.body.style.overflow = "hidden"; };
   const closeSales = () => { setSalesOpen(false); document.body.style.overflow = ""; };
 
   const handleCheckout = async (planKey, billingCycle) => {
@@ -1295,9 +1324,9 @@ export default function App() {
   };
 
   const monthlySavings = Object.fromEntries(
-    PLANS.map(p => {
+    PLANS.filter(p => p.monthly && p.annual).map(p => {
       const num = s => Number(String(s).replace(/,/g, ""));
-      return [p.key, (num(p.monthly) - num(p.yearly)) * 12];
+      return [p.key, (num(p.monthly) - num(p.annual)) * 12];
     })
   );
 
@@ -1652,31 +1681,54 @@ export default function App() {
         </div>
         <div className="pricing-grid">
           {PLANS.map(p => (
-            <div className={"p-card" + (p.featured ? " featured" : "")} key={p.tier}>
+            <div
+              className={"p-card" + (p.featured ? " featured" : "")}
+              key={p.tier}
+              style={{ "--order-d": p.desktopOrder, "--order-m": p.mobileOrder }}
+            >
               {p.featured && <div className="p-badge">Most Popular</div>}
-              {p.trial && <div className="p-trial-badge">7-Day Free Trial</div>}
+              {p.trial && <div className="p-trial-badge">{p.trial}</div>}
               <div className="p-tier">{p.tier}</div>
-              <div className="p-price"><sup>£</sup>{billing === "yearly" ? p.yearly : p.monthly}</div>
-              <div className="p-period">{billing === "yearly" ? "/ mo, billed annually" : "/ month"}</div>
-              <div className="p-savings">
-                {billing === "yearly" ? `💚 Save £${monthlySavings[p.key]}/yr vs monthly` : ""}
-              </div>
+              <div style={{ fontSize: 15, color: "#A1A1A6", fontWeight: 300, marginBottom: 16, minHeight: 22 }}>{p.tagline}</div>
+              {p.contactSales ? (
+                <div className="p-price" style={{ fontSize: 30 }}>Let's talk</div>
+              ) : (
+                <>
+                  <div className="p-price"><sup>£</sup>{billing === "yearly" ? p.annual : p.monthly}</div>
+                  <div className="p-period">{billing === "yearly" ? "/ mo, billed annually" : "/ month"}</div>
+                  <div className="p-savings">
+                    {billing === "yearly" ? `💚 Save £${monthlySavings[p.key]}/yr vs monthly` : ""}
+                  </div>
+                </>
+              )}
               <div className="p-roi">💰 {p.roi}</div>
-              <div className="setup-fee">+ £{p.setup} one-time setup</div>
+              {!p.contactSales && p.setup && (
+                <div className="setup-fee">{billing === "yearly" ? "Setup waived" : `£${p.setup} setup`}</div>
+              )}
               <div className="p-divider" />
-              <ul className="p-feats">{p.features.map(f => <li key={f}><span className="p-check">✓</span>{f}</li>)}</ul>
+              <ul className="p-feats">
+                {p.features.map(f => <li key={f}><span className="p-check">✓</span>{f}</li>)}
+                {p.locked && (
+                  <li style={{ color: "#6E6E73" }}><span className="p-check" style={{ color: "#6E6E73" }}>🔒</span>{p.locked}</li>
+                )}
+              </ul>
               <button
                 className={p.featured ? "p-btn-grad" : "p-btn-outline"}
-                onClick={() => p.key === "elite" ? openSales() : handleCheckout(p.key, billing)}
-                disabled={checkoutLoading === p.key}
-                style={{ cursor: checkoutLoading === p.key ? "wait" : "pointer" }}
+                onClick={() => {
+                  if (p.contactSales) { openSales(p.salesPlan || ""); return; }
+                  window.location.href = p.key === "starter"
+                    ? (billing === "yearly" ? STRIPE_STARTER_ANNUAL_URL : STRIPE_STARTER_MONTHLY_URL)
+                    : (billing === "yearly" ? STRIPE_PRO_ANNUAL_URL : STRIPE_PRO_MONTHLY_URL);
+                }}
+                style={{ cursor: "pointer" }}
               >
-                {checkoutLoading === p.key ? "Loading…" : p.cta}
+                {p.cta}
               </button>
             </div>
           ))}
         </div>
-        <p style={{ textAlign: "center", marginTop: 24, fontSize: 13, color: "#6E6E73" }}>Prices in GBP. Annual plans billed as a single payment.</p>
+        <p style={{ textAlign: "center", marginTop: 28, fontSize: 14, color: "#6E6E73" }}>Every plan includes a generous fair-use allowance — no surprise bills.</p>
+        <p style={{ textAlign: "center", marginTop: 6, fontSize: 13, color: "#6E6E73" }}>Prices in GBP. Annual plans billed as a single payment.</p>
       </section>
 
       {/* GUARANTEE */}
@@ -1812,7 +1864,7 @@ export default function App() {
             <button className="modal-close" onClick={closeSales}>✕</button>
           </div>
           <div className="modal-body">
-            <ContactSalesForm onClose={closeSales} />
+            <ContactSalesForm onClose={closeSales} plan={salesPlan} />
           </div>
         </div>
       </div>
