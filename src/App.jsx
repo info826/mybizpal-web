@@ -1554,7 +1554,7 @@ export default function App() {
                   <th></th>
                   <th className="col-rec">❌ Human Receptionist</th>
                   <th className="col-ai">❌ Other AI Tools</th>
-                  <th className="col-new">✦ MyBizPal</th>
+                  <th className="col-new"><img src={LOGO_FULL} alt="MyBizPal" style={{ height: 24, width: "auto", verticalAlign: "middle" }} /></th>
                 </tr>
               </thead>
               <tbody>
