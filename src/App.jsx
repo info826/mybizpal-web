@@ -432,6 +432,7 @@ textarea.form-input{min-height:88px;resize:vertical;font-family:'Manrope',sans-s
 .footer-links a{color:#A1A1A6;text-decoration:none;font-size:14px;transition:color .2s}
 .footer-links a:hover{color:#F5F5F7}
 .footer-disclosure{margin:0 0 40px;padding:24px 28px;background:rgba(0,212,255,0.04);border:1px solid rgba(0,212,255,0.16);border-radius:16px}
+.footer-disclosure > *{max-width:900px}
 .footer-disclosure-title{font-size:13px;font-weight:700;letter-spacing:0.04em;color:#00D4FF;margin-bottom:10px}
 .footer-disclosure p{font-size:13px;color:#A1A1A6;line-height:1.7;font-weight:300}
 .footer-disclosure a{color:#00D4FF;text-decoration:underline}
@@ -495,6 +496,7 @@ textarea.form-input{min-height:88px;resize:vertical;font-family:'Manrope',sans-s
 
 /* RESPONSIVE */
 @media(max-width:960px){
+  .bg-arcs{opacity:0.3}
   .nav{padding:0 20px 0 8px;height:140px}.nav-links{display:none}.nav-right{display:none}.hamburger{display:flex}
   .nav-logo img{height:52px}
   .mobile-menu{top:140px}
