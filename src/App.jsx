@@ -60,7 +60,7 @@ const PRICES = {
 const PLANS = [
   {
     key:"starter",tier:"Starter",tagline:"Never miss a call.",
-    featured:false,trial:"7-Day Free Trial",monthly:"197",annual:"158",setup:null,
+    featured:false,trial:"7-Day Free Trial",badge:"7-Day Free Trial",monthly:"197",annual:"158",setup:null,
     desktopOrder:4,mobileOrder:2,cta:"Start 7-day free trial",
     roi:"Pays back from ~1 recovered lead/mo",
     features:["Inbound call answering","WhatsApp conversations","Google Calendar booking","FAQ & customer service","Call recordings & transcripts","Basic analytics","500 voice minutes/mo (unlimited WhatsApp, fair use)"],
@@ -68,24 +68,24 @@ const PLANS = [
   },
   {
     key:"pro",tier:"Pro",tagline:"Your AI sales & service team.",
-    featured:true,trial:"14-Day Free Trial",monthly:"497",annual:"397",setup:"299",
+    featured:true,trial:"14-Day Free Trial",badge:"14-Day Free Trial",monthly:"497",annual:"397",setup:"299",
     desktopOrder:3,mobileOrder:1,cta:"Start 14-day free trial",
     roi:"Avg. client recovers £2,400/mo",
-    features:["Everything in Starter","SMS & email integration","Slack notifications","Outbound calling","Lead input & qualification","1 CRM integration","Unlimited calling (fair use)"],
+    features:["SMS & email integration","Slack notifications","Outbound calling","Lead input & qualification","1 CRM integration","Unlimited calling (fair use)",{from:"Everything in Starter"},"Inbound call answering","WhatsApp conversations","Google Calendar booking","FAQ & customer service","Call recordings & transcripts","Basic analytics","500 voice minutes/mo (unlimited WhatsApp, fair use)"],
     locked:"Unlock with Elite: Outbound campaigns at scale, full CRM suite & closer briefings",
   },
   {
     key:"elite",tier:"Elite",tagline:"A revenue engine that never sleeps.",
-    featured:false,contactSales:true,desktopOrder:2,mobileOrder:3,cta:"Contact Sales",
+    featured:false,contactSales:true,badge:"✦ Enterprise",desktopOrder:2,mobileOrder:3,cta:"Contact Sales",
     roi:"Less than a quarter the cost of one SDR (£50k+/yr).",
-    features:["Everything in Pro","Outbound campaigns at scale","Full CRM integrations","Closer briefings","Advanced analytics","Multilingual","Dedicated account manager","Done-for-you onboarding"],
+    features:["Outbound campaigns at scale","Full CRM integrations","Closer briefings","Advanced analytics","Multilingual","Dedicated account manager","Done-for-you onboarding",{from:"Everything in Pro"},"SMS & email integration","Slack notifications","Outbound calling","Lead input & qualification","1 CRM integration","Unlimited calling (fair use)",{from:"Everything in Starter"},"Inbound call answering","WhatsApp conversations","Google Calendar booking","FAQ & customer service","Call recordings & transcripts","Basic analytics","500 voice minutes/mo (unlimited WhatsApp, fair use)"],
     locked:"Unlock with Exclusive: White-label, multi-location & bespoke build",
   },
   {
     key:"exclusive",tier:"Exclusive",tagline:"Built entirely around you.",
-    featured:false,contactSales:true,salesPlan:"exclusive",desktopOrder:1,mobileOrder:4,cta:"Contact Sales",
+    featured:false,contactSales:true,salesPlan:"exclusive",badge:"✦ Bespoke",desktopOrder:1,mobileOrder:4,cta:"Contact Sales",
     roi:"Less than a quarter the cost of one SDR (£50k+/yr).",
-    features:["Everything in Elite","White-label","Multi-location","Voice cloning / custom voice","Bespoke integrations","White-glove onboarding + SLA"],
+    features:["White-label","Multi-location","Voice cloning / custom voice","Bespoke integrations","White-glove onboarding + SLA",{from:"Everything in Elite"},"Outbound campaigns at scale","Full CRM integrations","Closer briefings","Advanced analytics","Multilingual","Dedicated account manager","Done-for-you onboarding",{from:"Everything in Pro & Starter"},"Outbound calling & lead qualification","SMS, email & Slack integration","1 CRM integration","Unlimited calling (fair use)","Inbound call answering","WhatsApp conversations","Google Calendar booking","FAQ & customer service","Call recordings & transcripts","Basic analytics","500 voice minutes/mo (unlimited WhatsApp, fair use)"],
     locked:null,
   },
 ];
@@ -413,9 +413,19 @@ textarea.form-input{min-height:88px;resize:vertical;font-family:'Manrope',sans-s
 @media(max-width:1080px) and (min-width:961px){.pricing-grid{grid-template-columns:repeat(2,1fr)}}
 .p-card{background:#0d0d1a;border:1px solid rgba(255,255,255,0.08);border-radius:24px;padding:36px;transition:border-color .3s;position:relative;overflow:hidden;display:flex;flex-direction:column}
 .p-card.featured{border-color:rgba(0,212,255,0.35);background:linear-gradient(160deg,rgba(0,212,255,0.05),rgba(123,47,255,0.05),#0d0d1a)}
+/* Premium card treatments */
+.p-card.premium{background:linear-gradient(165deg,rgba(123,47,255,0.10),rgba(0,212,255,0.04),#0d0d1a);border-color:rgba(155,95,255,0.3)}
+.p-card.premium.top{background:linear-gradient(165deg,rgba(155,95,255,0.16),rgba(0,212,255,0.05),#0d0d1a);border-color:rgba(155,95,255,0.45)}
 .p-badge{position:absolute;top:-1px;right:28px;background:linear-gradient(135deg,#00D4FF,#7B2FFF);color:#000;font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;padding:4px 14px;border-radius:0 0 10px 10px}
 .p-trial-badge{position:absolute;top:-1px;left:28px;background:linear-gradient(135deg,#D946EF,#A21CAF);color:#fff;font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;padding:4px 14px;border-radius:0 0 10px 10px}
-.p-tier{font-size:12px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:#6E6E73;margin-bottom:14px}
+/* Unified badge row */
+.p-badge-row{height:30px;display:flex;align-items:center;margin-bottom:16px}
+.p-tier-badge{display:inline-flex;align-items:center;font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;padding:5px 13px;border-radius:100px;line-height:1}
+.p-tier-badge.trial{color:#fff;background:linear-gradient(135deg,#D946EF,#A21CAF)}
+.p-tier-badge.prem{color:#C9A8FF;background:rgba(155,95,255,0.12);border:1px solid rgba(155,95,255,0.35)}
+/* Bright tier titles (gradient for premium) */
+.p-tier{font-size:13px;font-weight:800;letter-spacing:0.12em;text-transform:uppercase;color:#F5F5F7;margin-bottom:12px}
+.p-tier.cyan{background:linear-gradient(135deg,#00D4FF,#9B5FFF);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
 .p-price{font-family:'Manrope',sans-serif;font-size:52px;font-weight:800;letter-spacing:-0.05em;line-height:1;margin-bottom:4px;color:#F5F5F7}
 .p-price sup{font-size:22px;vertical-align:super}
 .p-period{font-size:13px;color:#6E6E73;margin-bottom:6px}
@@ -426,10 +436,23 @@ textarea.form-input{min-height:88px;resize:vertical;font-family:'Manrope',sans-s
 .p-feats{list-style:none;display:flex;flex-direction:column;gap:10px;margin-bottom:28px;flex:1}
 .p-feats li{display:flex;align-items:flex-start;gap:10px;font-size:14px;color:#A1A1A6;line-height:1.5}
 .p-check{color:#00FF94;flex-shrink:0}
+/* Feature list: own vs inherited + divider */
+.p-feats li.own{color:#F5F5F7;font-weight:500}
+.p-feats li.own .p-check{color:#00D4FF}
+.p-from{font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#5a5a66;margin:10px 0 2px;padding-top:10px;border-top:1px solid rgba(255,255,255,0.06)}
 .p-btn-outline{width:100%;padding:13px;border-radius:100px;background:transparent;color:#F5F5F7;border:1px solid rgba(255,255,255,0.13);font-family:'Manrope',sans-serif;font-size:14px;font-weight:600;cursor:pointer;transition:all .2s}
 .p-btn-outline:hover{border-color:rgba(0,212,255,0.4);color:#00D4FF}
 .p-btn-grad{width:100%;padding:13px;border-radius:100px;background:linear-gradient(135deg,#00D4FF,#7B2FFF,#4060FF);color:#000;border:none;font-family:'Manrope',sans-serif;font-size:14px;font-weight:700;cursor:pointer;transition:all .2s}
 .p-btn-grad:hover{opacity:.86;box-shadow:0 6px 24px rgba(0,212,255,0.28)}
+/* Unified equal-height buttons */
+.p-btn-grad,.p-btn-outline{height:54px;display:flex;align-items:center;justify-content:center;gap:6px}
+.p-btn-grad{box-shadow:0 6px 22px rgba(0,212,255,0.35);font-weight:800}
+.p-btn-grad:hover{transform:translateY(-2px);box-shadow:0 10px 30px rgba(0,212,255,0.5)}
+/* Premium gradient-outline button for Contact Sales */
+.p-btn-prem{position:relative;width:100%;height:54px;border-radius:100px;background:rgba(123,47,255,0.08);color:#fff;border:1.5px solid transparent;font-family:'Manrope',sans-serif;font-size:15px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:transform .15s,background .2s}
+.p-btn-prem::before{content:'';position:absolute;inset:0;border-radius:100px;padding:1.5px;background:linear-gradient(135deg,#9B5FFF,#00D4FF);-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;pointer-events:none}
+.p-btn-prem:hover{background:rgba(123,47,255,0.18);transform:translateY(-2px)}
+.p-tagline{min-height:44px}
 
 /* GUARANTEE */
 .guarantee-section{padding:0 24px 80px;position:relative;z-index:1}
@@ -1682,14 +1705,16 @@ export default function App() {
         <div className="pricing-grid">
           {PLANS.map(p => (
             <div
-              className={"p-card" + (p.featured ? " featured" : "")}
+              className={"p-card" + (p.featured ? " featured" : "") + (p.contactSales ? " premium" : "") + (p.key === "exclusive" ? " top" : "")}
               key={p.tier}
               style={{ "--order-d": p.desktopOrder, "--order-m": p.mobileOrder }}
             >
               {p.featured && <div className="p-badge">Most Popular</div>}
-              {p.trial && <div className="p-trial-badge">{p.trial}</div>}
-              <div className="p-tier">{p.tier}</div>
-              <div style={{ fontSize: 15, color: "#A1A1A6", fontWeight: 300, marginBottom: 16, minHeight: 22 }}>{p.tagline}</div>
+              <div className="p-badge-row">
+                <span className={"p-tier-badge " + (p.contactSales ? "prem" : "trial")}>{p.badge}</span>
+              </div>
+              <div className={"p-tier" + (p.contactSales ? " cyan" : "")}>{p.tier}</div>
+              <div className="p-tagline" style={{ fontSize: 15, color: "#A1A1A6", fontWeight: 300, marginBottom: 16 }}>{p.tagline}</div>
               {p.contactSales ? (
                 <div className="p-price" style={{ fontSize: 30 }}>Let's talk</div>
               ) : (
@@ -1707,13 +1732,23 @@ export default function App() {
               )}
               <div className="p-divider" />
               <ul className="p-feats">
-                {p.features.map(f => <li key={f}><span className="p-check">✓</span>{f}</li>)}
+                {(() => {
+                  let seenFrom = false;
+                  return p.features.map((f, i) => {
+                    if (f && typeof f === "object" && f.from) {
+                      seenFrom = true;
+                      return <li key={"from" + i} className="p-from">{f.from}</li>;
+                    }
+                    const own = !seenFrom;
+                    return <li key={"f" + i} className={own ? "own" : undefined}><span className="p-check">✓</span>{f}</li>;
+                  });
+                })()}
                 {p.locked && (
                   <li style={{ color: "#6E6E73" }}><span className="p-check" style={{ color: "#6E6E73" }}>🔒</span>{p.locked}</li>
                 )}
               </ul>
               <button
-                className={p.featured ? "p-btn-grad" : "p-btn-outline"}
+                className={p.contactSales ? "p-btn-prem" : "p-btn-grad"}
                 onClick={() => {
                   if (p.contactSales) { openSales(p.salesPlan || ""); return; }
                   window.location.href = p.key === "starter"
