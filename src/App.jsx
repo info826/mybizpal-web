@@ -8,13 +8,6 @@ const LOGO_ICON = "https://res.cloudinary.com/dp8novljz/image/upload/MyBizPal_Fu
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
 const WA_NUMBER = import.meta.env.VITE_WA_NUMBER || "447360280655";
 
-// ── Stripe checkout links (new 4-tier pricing) ───────────────────────────────
-// TODO: replace these placeholders with the live Stripe payment links before launch.
-const STRIPE_STARTER_MONTHLY_URL = "https://buy.stripe.com/TODO_starter_monthly"; // TODO: Starter £197/mo
-const STRIPE_STARTER_ANNUAL_URL  = "https://buy.stripe.com/TODO_starter_annual";  // TODO: Starter £158/mo billed annually
-const STRIPE_PRO_MONTHLY_URL     = "https://buy.stripe.com/TODO_pro_monthly";     // TODO: Pro £497/mo (+£299 setup)
-const STRIPE_PRO_ANNUAL_URL      = "https://buy.stripe.com/TODO_pro_annual";      // TODO: Pro £397/mo billed annually (setup waived)
-
 // ── Integration logos (Cloudinary-hosted, trimmed & fitted to 72px height) ───
 const CLD = "https://res.cloudinary.com/dp8novljz/image/upload/f_auto,q_auto,e_trim,h_72,c_fit";
 const INTEGRATIONS = [
@@ -48,12 +41,6 @@ const TESTIMONIALS = [
   {text:"The AI sounds completely natural. Our team can now focus on in-person clients instead of answering the same questions by phone.",name:"A. Patel",role:"Home Services, Birmingham",photo:"/A.Patel.png"},
   {text:"Easiest setup I have done. Paid for itself within the first week. If you run an SME and miss calls, you need this now.",name:"Chris D.",role:"Agency Owner, Manchester",photo:"/Chris.D.png"},
 ];
-
-const PRICES = {
-  starter:{setup:"price_1TbRiUEeQsMUUSove7Zk2xI4",monthly:"price_1TbRkNEeQsMUUSovudq4xJVy",annual:"price_1TbRpTEeQsMUUSovR6swIWaJ"},
-  pro:    {setup:"price_1TbRjMEeQsMUUSovK2cPJHxc",monthly:"price_1TbRkvEeQsMUUSovAQatpRDB",annual:"price_1TbRpwEeQsMUUSovcxJ5MDNi"},
-  elite:  {setup:"price_1TbRjhEeQsMUUSovnIb8Qzbi",monthly:"price_1TbRluEeQsMUUSovw7IX1uCE",annual:"price_1TbRsVEeQsMUUSovSx7v82k2"},
-};
 
 // desktopOrder = left→right on wide screens (Exclusive, Elite, Pro, Starter).
 // mobileOrder  = top→bottom when stacked (Pro, Starter, Elite, Exclusive).
@@ -1321,8 +1308,6 @@ export default function App() {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [billing, setBilling] = useState("yearly");
-  const [checkoutLoading, setCheckoutLoading] = useState(null);
-  const [checkoutError, setCheckoutError] = useState(null);
   const [modalOpen, setModalOpen] = useState(false);
 
   const [salesOpen, setSalesOpen] = useState(false);
@@ -1332,24 +1317,6 @@ export default function App() {
   const closeModal = () => { setModalOpen(false); document.body.style.overflow = ""; };
   const openSales = (plan = "") => { setSalesPlan(plan); setSalesOpen(true); document.body.style.overflow = "hidden"; };
   const closeSales = () => { setSalesOpen(false); document.body.style.overflow = ""; };
-
-  const handleCheckout = async (planKey, billingCycle) => {
-    setCheckoutLoading(planKey); setCheckoutError(null);
-    try {
-      const priceId = PRICES[planKey][billingCycle === "yearly" ? "annual" : "monthly"];
-      const setupPriceId = PRICES[planKey].setup;
-      const res = await fetch(`${API_URL}/api/create-checkout-session`, {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ plan: planKey, billingCycle, priceId, setupPriceId }),
-      });
-      if (!res.ok) throw new Error("Failed");
-      const { url } = await res.json();
-      window.location.href = url;
-    } catch {
-      setCheckoutError("Something went wrong. Please try again or email info@mybizpal.ai");
-      setCheckoutLoading(null);
-    }
-  };
 
   const monthlySavings = Object.fromEntries(
     PLANS.filter(p => p.monthly && p.annual).map(p => {
@@ -1757,9 +1724,8 @@ export default function App() {
                 className={p.contactSales ? "p-btn-prem" : "p-btn-grad"}
                 onClick={() => {
                   if (p.contactSales) { openSales(p.salesPlan || ""); return; }
-                  window.location.href = p.key === "starter"
-                    ? (billing === "yearly" ? STRIPE_STARTER_ANNUAL_URL : STRIPE_STARTER_MONTHLY_URL)
-                    : (billing === "yearly" ? STRIPE_PRO_ANNUAL_URL : STRIPE_PRO_MONTHLY_URL);
+                  const billingParam = billing === "yearly" ? "annual" : "monthly";
+                  window.location.href = `https://app.mybizpal.ai/signup?plan=${p.key}&billing=${billingParam}`;
                 }}
                 style={{ cursor: "pointer" }}
               >
@@ -1810,10 +1776,6 @@ export default function App() {
           </div>
         </div>
       </section>
-
-      {checkoutError && (
-        <div className="checkout-toast" onClick={() => setCheckoutError(null)}>⚠ {checkoutError}</div>
-      )}
 
       {/* FOOTER */}
       <footer className="footer">
