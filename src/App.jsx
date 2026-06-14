@@ -306,6 +306,7 @@ h1,h2,h3{font-family:'Manrope',sans-serif;line-height:1.1;letter-spacing:-0.03em
 .compare-table tr:last-child td{border-bottom:none}
 .compare-table tr:hover td{background:rgba(255,255,255,0.015)}
 .compare-table tr:hover td.col-new{background:rgba(0,212,255,0.04)}
+.compare-hint{display:none;text-align:center;color:#6E6E73;font-size:12px;margin-top:12px;font-family:'Manrope',sans-serif}
 .check-yes{color:#00FF94}
 .check-no{color:#FF5555}
 
@@ -555,7 +556,11 @@ textarea.form-input{min-height:88px;resize:vertical;font-family:'Manrope',sans-s
   .pricing-grid .p-card{order:var(--order-m,0)}
   .calc-body{grid-template-columns:1fr;padding:24px 24px 40px}.calc-left{border-right:none;border-bottom:1px solid rgba(255,255,255,0.08);padding-right:0;padding-bottom:28px;margin-bottom:28px}
   .calc-header{padding:32px 24px 0}
-  .compare-section{overflow-x:auto}
+  .compare-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .compare-table{min-width:680px}
+  .compare-table th:first-child,.compare-table td:first-child{min-width:140px}
+  .compare-table th:not(:first-child),.compare-table td:not(:first-child){min-width:150px}
+  .compare-hint{display:block}
   .demo-inner{grid-template-columns:1fr}.demo-left{border-right:none;border-bottom:1px solid rgba(255,255,255,0.08);padding:40px 28px}.demo-right{padding:40px 28px}
   .form-row{grid-template-columns:1fr}.footer-grid{grid-template-columns:1fr 1fr}
   .footer-bottom{flex-direction:column;text-align:center}
@@ -1053,7 +1058,7 @@ function SofiWidget() {
   const [context, setContext] = useState({});
 
   // Drag state
-  const [pos, setPos] = useState({ bottom: 100, right: 28 });
+  const [pos, setPos] = useState({ bottom: 24, right: 28 });
   const dragging = useRef(false);
   const dragStart = useRef({ x: 0, y: 0, bottom: 0, right: 0 });
   const didDrag = useRef(false);
@@ -1621,6 +1626,7 @@ export default function App() {
               </tbody>
             </table>
           </div>
+          <div className="compare-hint">← swipe to compare →</div>
         </div>
       </div>
 
