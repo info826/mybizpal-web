@@ -1331,6 +1331,25 @@ export default function App() {
     return () => window.removeEventListener("scroll", h);
   }, []);
 
+  // On load with a URL hash (e.g. /#pricing), scroll to that section once
+  // layout has settled. Smooth-scroll CSS handles the animation; we retry
+  // briefly because images/sections above can shift position after paint.
+  useEffect(() => {
+    const hash = window.location.hash;
+    if (!hash || hash.length < 2) return;
+    let tries = 0;
+    const id = hash.slice(1);
+    const tick = () => {
+      const el = document.getElementById(id);
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+      if (++tries < 8) setTimeout(tick, 250);
+    };
+    const start = setTimeout(tick, 300);
+    return () => clearTimeout(start);
+  }, []);
+
   // Close modal on Escape
   useEffect(() => {
     const h = (e) => { if (e.key === "Escape") { closeModal(); closeSales(); } };
