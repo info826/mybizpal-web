@@ -7,6 +7,7 @@ const LOGO_FULL = "https://res.cloudinary.com/dp8novljz/image/upload/MyBizPal_Fu
 const LOGO_ICON = "https://res.cloudinary.com/dp8novljz/image/upload/MyBizPal_Full_Logo_Dark_BG_R_gud0ag.png";
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
 const WA_NUMBER = import.meta.env.VITE_WA_NUMBER || "447360280655";
+const TURNSTILE_SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY;
 
 // ── Integration logos (Cloudinary-hosted, trimmed & fitted to 72px height) ───
 const CLD = "https://res.cloudinary.com/dp8novljz/image/upload/f_auto,q_auto,e_trim,h_72,c_fit";
@@ -684,6 +685,41 @@ function DemoForm({ onClose }) {
   const [errs, setErrs] = useState({});
   const [loading, setLoading] = useState(false);
   const [done, setDone] = useState(false);
+  const [token, setToken] = useState("");          // Cloudflare Turnstile token
+  const tsRef = useRef(null);                        // this instance's widget container
+  const widgetIdRef = useRef(null);                  // explicit-render widget id
+
+  // Render this instance's Turnstile widget explicitly (script is loaded once in
+  // index.html with ?render=explicit). Both DemoForms are always mounted, so each
+  // owns its own container ref + widget id — no collision. window.turnstile loads
+  // async, so poll until it's ready before rendering; a slow load can't crash this.
+  useEffect(() => {
+    let cancelled = false;
+    let pollId;
+    const tryRender = () => {
+      if (cancelled || widgetIdRef.current !== null) return true;
+      if (!TURNSTILE_SITE_KEY) return true; // no key (e.g. local without env) → skip; button stays disabled
+      if (!window.turnstile || typeof window.turnstile.render !== "function" || !tsRef.current) return false;
+      widgetIdRef.current = window.turnstile.render(tsRef.current, {
+        sitekey: TURNSTILE_SITE_KEY,
+        callback: setToken,
+        "expired-callback": () => setToken(""),
+        "error-callback": () => setToken(""),
+      });
+      return true;
+    };
+    if (!tryRender()) {
+      pollId = setInterval(() => { if (tryRender()) clearInterval(pollId); }, 200);
+    }
+    return () => {
+      cancelled = true;
+      if (pollId) clearInterval(pollId);
+      try {
+        if (window.turnstile && widgetIdRef.current !== null) window.turnstile.remove(widgetIdRef.current);
+      } catch {}
+      widgetIdRef.current = null;
+    };
+  }, []);
 
   const validate = () => {
     const e = {};
@@ -697,7 +733,8 @@ function DemoForm({ onClose }) {
   const formValid = !!(
     f.firstName.trim() && f.lastName.trim() &&
     /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(f.email.trim()) &&
-    phone && isValidPhoneNumber(phone)
+    phone && isValidPhoneNumber(phone) &&
+    token
   );
 
   const submit = async () => {
@@ -713,13 +750,19 @@ function DemoForm({ onClose }) {
           phone: phone,
           business: f.message,
           source: "website_demo_form",
+          turnstileToken: token,
         }),
       });
       if (!res.ok) throw new Error("API error");
       setDone(true);
     } catch {
       alert("Something went wrong. Please email info@mybizpal.ai");
-    } finally { setLoading(false); }
+    } finally {
+      setLoading(false);
+      // Tokens are single-use — clear it and reset the widget so a retry gets a fresh one.
+      setToken("");
+      try { if (window.turnstile && widgetIdRef.current !== null) window.turnstile.reset(widgetIdRef.current); } catch {}
+    }
   };
 
   const ch = (k, v) => { setF({ ...f, [k]: v }); if (errs[k]) setErrs({ ...errs, [k]: undefined }); };
@@ -762,6 +805,9 @@ function DemoForm({ onClose }) {
       <div className="form-group">
         <label className="form-label">About your business <span style={{ color: "#6E6E73", fontWeight: 400 }}>(optional)</span></label>
         <input className="form-input" placeholder="e.g. Dental clinic, 4 staff, 50 calls/week" value={f.message} onChange={e => ch("message", e.target.value)} />
+      </div>
+      <div className="form-group" style={{ display: "flex", justifyContent: "center" }}>
+        <div ref={tsRef}></div>
       </div>
       <button className="form-submit" onClick={submit} disabled={loading || !formValid}>
         {loading ? "Connecting..." : "Get a Live Demo Call →"}
