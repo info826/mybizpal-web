@@ -1079,6 +1079,30 @@ function RevenueCalculator({ onOpenModal }) {
 }
 
 // ── Sofi Chat Widget (draggable) ──────────────────────────────────────────
+// EU AI Act Article 50: the FIRST message discloses that Sofi is an AI
+// assistant, before any data is collected. Rendering it also creates the
+// widget session server-side, which stamps disclosure_logged_at (the
+// evidence trail) and returns the session_ref used as the WhatsApp
+// handover token. Every backend call fails soft: the chat keeps working
+// and the WhatsApp link falls back to a ref-less pre-fill.
+const SOFI_OPENING =
+  "Hi! 👋 I'm Sofi, MyBizPal's AI assistant. I answer calls, reply on WhatsApp and book appointments for UK businesses, 24/7.\n\nWhat kind of business do you run?";
+
+const EMAIL_RE = /[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/;
+// No /i flag: the optional second word (surname) must be Capitalised, or
+// "I'm James and I run..." would capture "James and".
+const NAME_INTRO_RE = /\b(?:[Mm]y name(?:'s| is)|[Ii]'m|[Ii] am|[Tt]his is)\s+([A-Za-z][a-z'-]+(?:\s[A-Z][a-z'-]+)?)/;
+// Words that follow "I'm ..." / "this is ..." far more often than a name does.
+const NOT_NAMES = new Set([
+  "looking", "interested", "just", "running", "trying", "calling", "here",
+  "not", "the", "a", "an", "so", "really", "very", "keen", "happy", "good",
+  "fine", "sure", "based", "wondering", "curious", "thinking", "hoping",
+  "going", "getting", "still", "already", "also", "actually", "only", "asking",
+  "great", "brilliant", "perfect", "amazing", "awesome", "lovely", "urgent",
+  "my", "our", "it", "what", "how", "why", "all", "mostly", "mainly",
+  "probably", "maybe", "roughly", "around", "about", "over", "more", "less",
+]);
+
 function SofiWidget() {
   const [open, setOpen] = useState(false);
   const [showLabel, setShowLabel] = useState(true);
@@ -1086,9 +1110,15 @@ function SofiWidget() {
   const [input, setInput] = useState("");
   const [typing, setTyping] = useState(false);
   const [showHandoff, setShowHandoff] = useState(false);
-  const [waUrl, setWaUrl] = useState(`https://wa.me/${WA_NUMBER}`);
+  const [sessionRef, setSessionRef] = useState(null);
   const [exchangeCount, setExchangeCount] = useState(0);
   const [context, setContext] = useState({});
+
+  // Session outbox: messages/answers queue here and flush to the API once
+  // the session exists; failed flushes are retried on the next send.
+  const sessionRefLive = useRef(null);
+  const outbox = useRef({ messages: [], qualification: {} });
+  const flushing = useRef(false);
 
   // Drag state
   const [pos, setPos] = useState({ bottom: 24, right: 28 });
@@ -1144,10 +1174,78 @@ function SofiWidget() {
     dragging.current = false;
   };
 
-  const buildWaUrl = (ctx) => {
-    const industry = ctx.industry || "business";
-    const msg = encodeURIComponent(`Hi Sofi! I was just chatting on the MyBizPal website. I run a ${industry} and I'm interested in learning more.`);
-    return `https://wa.me/${WA_NUMBER}?text=${msg}`;
+  // WhatsApp deep link. Once the session exists, the pre-fill carries the
+  // handover ref so the WhatsApp side can merge this conversation
+  // (docs/widget-handover-spec.md).
+  const waMessage = sessionRef
+    ? `Hi Sofi, continuing our chat (ref: ${sessionRef})`
+    : "Hi Sofi! I was just chatting on the MyBizPal website and I'd like to carry on here.";
+  const waUrl = `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(waMessage)}`;
+
+  const flushOutbox = async () => {
+    const ref = sessionRefLive.current;
+    const box = outbox.current;
+    if (!ref || flushing.current || (!box.messages.length && !Object.keys(box.qualification).length)) return;
+    flushing.current = true;
+    const payload = { session_ref: ref, messages: box.messages, qualification: box.qualification };
+    outbox.current = { messages: [], qualification: {} };
+    try {
+      const res = await fetch(`${API_URL}/api/widget-session/append`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) throw new Error(`append ${res.status}`);
+    } catch {
+      // Put it back for the next attempt; the chat itself never blocks.
+      outbox.current = {
+        messages: [...payload.messages, ...outbox.current.messages],
+        qualification: { ...payload.qualification, ...outbox.current.qualification },
+      };
+    } finally {
+      flushing.current = false;
+    }
+  };
+
+  const queueForSession = (msgs, qual = {}) => {
+    outbox.current.messages.push(...msgs.map(m => ({ ...m, at: new Date().toISOString() })));
+    outbox.current.qualification = { ...outbox.current.qualification, ...qual };
+    flushOutbox();
+  };
+
+  const createSession = async () => {
+    try {
+      const res = await fetch(`${API_URL}/api/widget-session`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ first_message: SOFI_OPENING, page_url: window.location.href }),
+      });
+      if (!res.ok) throw new Error(`create ${res.status}`);
+      const data = await res.json();
+      if (data.session_ref) {
+        sessionRefLive.current = data.session_ref;
+        setSessionRef(data.session_ref);
+        flushOutbox();
+      }
+    } catch {
+      // Fail soft: chat works without a session; WhatsApp link stays ref-less.
+    }
+  };
+
+  // Spot a volunteered name/email so Sofi can confirm it back and store it.
+  const detectContact = (txt, ctx) => {
+    const found = {};
+    if (!ctx.email) {
+      const email = txt.match(EMAIL_RE);
+      if (email) found.email = email[0];
+    }
+    if (!ctx.name) {
+      const m = txt.match(NAME_INTRO_RE);
+      if (m && !NOT_NAMES.has(m[1].split(/\s/)[0].toLowerCase())) {
+        found.name = m[1].replace(/\b[a-z]/g, c => c.toUpperCase());
+      }
+    }
+    return found;
   };
 
   const sofiReply = (userMsg, count, ctx) => {
@@ -1156,28 +1254,37 @@ function SofiWidget() {
       setTyping(false);
       let reply = "";
       let newCtx = { ...ctx };
+      let qual = {};
       let triggerHandoff = false;
 
+      const found = detectContact(userMsg, ctx);
+      if (found.name) { newCtx.name = found.name; qual.name = found.name; }
+      if (found.email) { newCtx.email = found.email; qual.email = found.email; }
+      let ack = "";
+      if (found.name && found.email) ack = `Lovely to meet you, ${found.name}, and I've noted ${found.email}. `;
+      else if (found.name) ack = `Lovely to meet you, ${found.name}! `;
+      else if (found.email) ack = `Perfect, I've noted ${found.email}. `;
+
       if (count === 1) {
-        newCtx.industry = userMsg;
-        reply = `${userMsg} — great, we work really well with that! 🙌\n\nWhat's the biggest headache right now?\n\n1️⃣ Missing calls after hours\n2️⃣ WhatsApp not replied fast enough\n3️⃣ Booking is too manual\n4️⃣ All of the above 😅`;
+        newCtx.business_type = userMsg;
+        qual.business_type = userMsg;
+        reply = `${ack}That's great, we help businesses like yours every day. 🙌\n\nWhat's the biggest headache right now?\n\n1️⃣ Missed calls\n2️⃣ After-hours enquiries\n3️⃣ Chasing and following up leads\n4️⃣ All of the above 😅`;
       } else if (count === 2) {
         newCtx.pain = userMsg;
-        reply = `Exactly what MyBizPal fixes — usually within the first week.\n\nLast question: roughly how many people in your team?`;
+        qual.pain = userMsg;
+        reply = `${ack}That's exactly what MyBizPal fixes, usually within the first week.\n\nLast one: roughly how many calls or enquiries do you get a week?`;
       } else if (count >= 3) {
-        newCtx.teamSize = userMsg;
-        reply = `Perfect — I have everything I need! 👌\n\nLet's move this to WhatsApp so I can walk you through exactly what this looks like for your business and sort next steps.`;
+        newCtx.volume = userMsg;
+        qual.volume = userMsg;
+        reply = `${ack}Perfect, I have everything I need! 👌\n\nLet's carry on over WhatsApp and I'll show you exactly what Sofi can do for your business.`;
         triggerHandoff = true;
       }
 
       setContext(newCtx);
       setMessages(prev => [...prev, { from: "sofi", text: reply }]);
+      queueForSession([{ from: "sofi", text: reply }], qual);
 
-      if (triggerHandoff) {
-        const url = buildWaUrl(newCtx);
-        setWaUrl(url);
-        setTimeout(() => setShowHandoff(true), 400);
-      }
+      if (triggerHandoff) setTimeout(() => setShowHandoff(true), 400);
     }, 800 + Math.random() * 500);
   };
 
@@ -1186,6 +1293,7 @@ function SofiWidget() {
     if (!txt || typing) return;
     const newCount = exchangeCount + 1;
     setMessages(prev => [...prev, { from: "user", text: txt }]);
+    queueForSession([{ from: "user", text: txt }]);
     setInput("");
     setExchangeCount(newCount);
     sofiReply(txt, newCount, context);
@@ -1202,7 +1310,10 @@ function SofiWidget() {
         setTyping(true);
         setTimeout(() => {
           setTyping(false);
-          setMessages([{ from: "sofi", text: "Hi! 👋 I'm Sofi from MyBizPal.\n\nI help UK businesses answer every call, reply on WhatsApp, and book appointments — 24/7.\n\nWhat kind of business do you run?" }]);
+          // Art. 50 disclosure is this first message; creating the session
+          // logs the disclosure event server-side at the same moment.
+          setMessages([{ from: "sofi", text: SOFI_OPENING }]);
+          createSession();
         }, 900);
       }, 300);
     }
@@ -1258,7 +1369,7 @@ function SofiWidget() {
           <div className="sofi-panel-header">
             <div className="sofi-avatar" style={{ color: "#fff" }}>{waIconSvg}</div>
             <div className="sofi-header-text">
-              <h4>Sofi — MyBizPal AI</h4>
+              <h4>Sofi · MyBizPal AI</h4>
               <p>● Online · WhatsApp powered</p>
             </div>
             <button className="sofi-close" onClick={() => setOpen(false)}>✕</button>
@@ -1284,7 +1395,7 @@ function SofiWidget() {
 
           {showHandoff && (
             <div className="sofi-handoff">
-              <p>Let's continue on WhatsApp — I'll be right there 💬</p>
+              <p>Let's continue on WhatsApp, I'll be right there 💬</p>
               <a className="sofi-wa-btn" href={waUrl} target="_blank" rel="noreferrer">
                 {waIconSvg} Continue on WhatsApp →
               </a>
