@@ -51,7 +51,7 @@ const PLANS = [
     featured:false,trial:"7-Day Free Trial",badge:"7-Day Free Trial",monthly:"197",annual:"158",setup:null,
     desktopOrder:4,mobileOrder:2,cta:"Start 7-day free trial",
     roi:"Pays back from ~1 recovered lead/mo",
-    features:["Inbound call answering","WhatsApp conversations","Google Calendar booking","FAQ & customer service","Call recordings & transcripts","Basic analytics","500 voice minutes/mo (unlimited WhatsApp, fair use)"],
+    features:["Inbound call answering","WhatsApp conversations","Google Calendar booking","FAQ & customer service","Call transcripts","Basic analytics","500 voice minutes/mo (unlimited WhatsApp, fair use)"],
     locked:"Unlock with Pro: Outbound calling & lead qualification",
   },
   {
@@ -59,21 +59,21 @@ const PLANS = [
     featured:true,trial:"14-Day Free Trial",badge:"14-Day Free Trial",monthly:"497",annual:"397",setup:"299",
     desktopOrder:3,mobileOrder:1,cta:"Start 14-day free trial",
     roi:"Avg. client recovers £2,400/mo",
-    features:["SMS & email integration","Slack notifications","Outbound calling","Lead input & qualification","1 CRM integration","Unlimited calling (fair use)",{from:"Everything in Starter"},"Inbound call answering","WhatsApp conversations","Google Calendar booking","FAQ & customer service","Call recordings & transcripts","Basic analytics","500 voice minutes/mo (unlimited WhatsApp, fair use)"],
+    features:["SMS & email integration","Slack notifications","Outbound calling","Lead input & qualification","1 CRM integration","Unlimited calling (fair use)",{from:"Everything in Starter"},"Inbound call answering","WhatsApp conversations","Google Calendar booking","FAQ & customer service","Call transcripts","Basic analytics","500 voice minutes/mo (unlimited WhatsApp, fair use)"],
     locked:"Unlock with Elite: Outbound campaigns at scale, full CRM suite & closer briefings",
   },
   {
     key:"elite",tier:"Elite",tagline:"A revenue engine that never sleeps.",
     featured:false,contactSales:true,badge:"✦ Enterprise",desktopOrder:2,mobileOrder:3,cta:"Contact Sales",
     roi:"Less than a quarter the cost of one SDR (£50k+/yr).",
-    features:["Outbound campaigns at scale","Full CRM integrations","Closer briefings","Advanced analytics","Multilingual","Dedicated account manager","Done-for-you onboarding",{from:"Everything in Pro"},"SMS & email integration","Slack notifications","Outbound calling","Lead input & qualification","1 CRM integration","Unlimited calling (fair use)",{from:"Everything in Starter"},"Inbound call answering","WhatsApp conversations","Google Calendar booking","FAQ & customer service","Call recordings & transcripts","Basic analytics","500 voice minutes/mo (unlimited WhatsApp, fair use)"],
+    features:["Outbound campaigns at scale","Full CRM integrations","Closer briefings","Advanced analytics","Multilingual","Dedicated account manager","Done-for-you onboarding",{from:"Everything in Pro"},"SMS & email integration","Slack notifications","Outbound calling","Lead input & qualification","1 CRM integration","Unlimited calling (fair use)",{from:"Everything in Starter"},"Inbound call answering","WhatsApp conversations","Google Calendar booking","FAQ & customer service","Call transcripts","Basic analytics","500 voice minutes/mo (unlimited WhatsApp, fair use)"],
     locked:"Unlock with Exclusive: White-label, multi-location & bespoke build",
   },
   {
     key:"exclusive",tier:"Exclusive",tagline:"Built entirely around you.",
     featured:false,contactSales:true,salesPlan:"exclusive",badge:"✦ Bespoke",desktopOrder:1,mobileOrder:4,cta:"Contact Sales",
     roi:"Less than a quarter the cost of one SDR (£50k+/yr).",
-    features:["White-label","Multi-location","Voice cloning / custom voice","Bespoke integrations","White-glove onboarding + SLA",{from:"Everything in Elite"},"Outbound campaigns at scale","Full CRM integrations","Closer briefings","Advanced analytics","Multilingual","Dedicated account manager","Done-for-you onboarding",{from:"Everything in Pro & Starter"},"Outbound calling & lead qualification","SMS, email & Slack integration","1 CRM integration","Unlimited calling (fair use)","Inbound call answering","WhatsApp conversations","Google Calendar booking","FAQ & customer service","Call recordings & transcripts","Basic analytics","500 voice minutes/mo (unlimited WhatsApp, fair use)"],
+    features:["White-label","Multi-location","Voice cloning / custom voice","Bespoke integrations","White-glove onboarding + SLA",{from:"Everything in Elite"},"Outbound campaigns at scale","Full CRM integrations","Closer briefings","Advanced analytics","Multilingual","Dedicated account manager","Done-for-you onboarding",{from:"Everything in Pro & Starter"},"Outbound calling & lead qualification","SMS, email & Slack integration","1 CRM integration","Unlimited calling (fair use)","Inbound call answering","WhatsApp conversations","Google Calendar booking","FAQ & customer service","Call transcripts","Basic analytics","500 voice minutes/mo (unlimited WhatsApp, fair use)"],
     locked:null,
   },
 ];
