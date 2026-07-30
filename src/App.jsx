@@ -1418,7 +1418,7 @@ function SofiWidget() {
 }
 
 // ── VideoBox ──────────────────────────────────────────────────────────────────
-function VideoBox({ label, title, subtitle, duration, accentColor = "#00D4FF", videoId }) {
+function VideoBox({ label, title, subtitle, duration, accentColor = "#00D4FF", videoId, videoTitle }) {
   const [playing, setPlaying] = useState(false);
   const cornerStyle = (top, right, bottom, left) => ({
     position: "absolute", width: 20, height: 20,
@@ -1453,7 +1453,7 @@ function VideoBox({ label, title, subtitle, duration, accentColor = "#00D4FF", v
           </div>
         ) : videoId ? (
           <iframe src={`https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&rel=0`}
-            title={`MyBizPal — ${label}`} loading="lazy"
+            title={videoTitle || `MyBizPal — ${label}`} loading="lazy"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
             allowFullScreen
             style={{ position: "absolute", inset: 0, width: "100%", height: "100%", border: 0 }} />
@@ -1618,7 +1618,7 @@ export default function App() {
       <div id="video">
         <VideoBox label="Product Demo" title={<>See MyBizPal <span className="grad-text">in action</span></>}
           subtitle="Watch a real AI agent handle an inbound call, qualify a lead, and book an appointment."
-          duration="1:58" accentColor="#00D4FF" />
+          duration="0:40" accentColor="#00D4FF" videoId="_v9iu5caQ5A" videoTitle="MyBizPal — Live Call Demo" />
       </div>
 
       {/* PAIN SECTION */}
