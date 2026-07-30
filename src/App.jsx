@@ -1671,7 +1671,7 @@ export default function App() {
       {/* VIDEO 2 — Platform Presentation (scattered) */}
       <VideoBox label="Platform Overview" title={<>The full <span className="grad-text">MyBizPal platform</span></>}
         subtitle="A complete walkthrough of features, integrations, and what goes live on day one."
-        duration="3:45" accentColor="#7B2FFF" videoId="YjyZL_sTN00" />
+        duration="0:41" accentColor="#7B2FFF" videoId="YjyZL_sTN00" />
 
       {/* REVENUE CALCULATOR */}
       <RevenueCalculator onOpenModal={openModal} />
