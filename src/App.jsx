@@ -1418,7 +1418,11 @@ function SofiWidget() {
 }
 
 // ── VideoBox ──────────────────────────────────────────────────────────────────
-function VideoBox({ label, title, subtitle, duration, accentColor = "#00D4FF", videoId, videoTitle }) {
+// Videos are self-hosted on Cloudinary — f_auto,q_auto lets the CDN pick format
+// and quality per browser (cuts the source files by 58-83%).
+const CLOUDINARY_VIDEO = "https://res.cloudinary.com/dp8novljz/video/upload";
+
+function VideoBox({ label, title, subtitle, duration, accentColor = "#00D4FF", videoSrc, posterSrc, videoTitle }) {
   const [playing, setPlaying] = useState(false);
   const cornerStyle = (top, right, bottom, left) => ({
     position: "absolute", width: 20, height: 20,
@@ -1438,12 +1442,11 @@ function VideoBox({ label, title, subtitle, duration, accentColor = "#00D4FF", v
       </h2>
       <p style={{ fontSize: 17, color: "#A1A1A6", fontWeight: 300, maxWidth: 480, margin: "0 auto 32px" }}>{subtitle}</p>
       <div className="video-box" onClick={() => setPlaying(true)}
-        style={videoId ? { boxShadow: "0 8px 32px rgba(0,0,0,0.45)", cursor: playing ? "default" : "pointer" } : undefined}>
+        style={videoSrc ? { boxShadow: "0 8px 32px rgba(0,0,0,0.45)", cursor: playing ? "default" : "pointer" } : undefined}>
         <div className="video-grid" />
         <div className="video-glow" style={{ background: `radial-gradient(ellipse,${accentColor}20 0%,rgba(123,47,255,0.08) 40%,transparent 70%)` }} />
-        {videoId && !playing && (
-          <img src={`https://i.ytimg.com/vi/${videoId}/maxresdefault.jpg`} alt="" loading="lazy"
-            onError={e => { if (!e.currentTarget.src.includes("hqdefault")) e.currentTarget.src = `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`; }}
+        {videoSrc && !playing && posterSrc && (
+          <img src={posterSrc} alt="" loading="lazy"
             style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", opacity: 0.55 }} />
         )}
         {!playing ? (
@@ -1451,19 +1454,16 @@ function VideoBox({ label, title, subtitle, duration, accentColor = "#00D4FF", v
             <button className="play-btn" aria-label={`Play video: MyBizPal ${label}`} style={{ background: `linear-gradient(135deg,${accentColor},#7B2FFF)` }}><div className="play-tri" /></button>
             <div style={{ fontSize: 15, color: "#A1A1A6", fontWeight: 300 }}>MyBizPal — {label} · {duration}</div>
           </div>
-        ) : videoId ? (
-          <iframe src={`https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&rel=0`}
-            title={videoTitle || `MyBizPal — ${label}`} loading="lazy"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-            allowFullScreen
-            style={{ position: "absolute", inset: 0, width: "100%", height: "100%", border: 0 }} />
+        ) : videoSrc ? (
+          <video src={videoSrc} poster={posterSrc} controls autoPlay playsInline preload="none"
+            aria-label={videoTitle || `MyBizPal — ${label}`}
+            style={{ position: "absolute", inset: 0, width: "100%", height: "100%", border: 0, objectFit: "contain", background: "#000" }} />
         ) : (
-          <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", gap: 12 }}>
-            <div style={{ fontSize: 18, color: "#A1A1A6" }}>🎬 Video Coming Soon</div>
-            <div style={{ fontSize: 14, color: "#6E6E73" }}>Replace with your Vimeo or YouTube embed</div>
+          <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <div style={{ fontSize: 18, color: "#A1A1A6" }}>🎬 Video coming soon</div>
           </div>
         )}
-        {!(playing && videoId) && <>
+        {!(playing && videoSrc) && <>
           <div style={cornerStyle(true, undefined, undefined, true)} />
           <div style={cornerStyle(true, true, undefined, undefined)} />
           <div style={cornerStyle(undefined, undefined, true, true)} />
@@ -1618,7 +1618,9 @@ export default function App() {
       <div id="video">
         <VideoBox label="Product Demo" title={<>See MyBizPal <span className="grad-text">in action</span></>}
           subtitle="Watch a real AI agent handle an inbound call, qualify a lead, and book an appointment."
-          duration="0:40" accentColor="#00D4FF" videoId="_v9iu5caQ5A" videoTitle="MyBizPal — Live Call Demo" />
+          duration="0:40" accentColor="#00D4FF" videoTitle="MyBizPal — Live Call Demo"
+          videoSrc={`${CLOUDINARY_VIDEO}/f_auto,q_auto/v1785492528/279da9c1-173d-4978-bdb3-1a8460ec36dd_nzrmfh.mp4`}
+          posterSrc={`${CLOUDINARY_VIDEO}/so_auto,f_auto,q_auto,w_1800,c_limit/v1785492528/279da9c1-173d-4978-bdb3-1a8460ec36dd_nzrmfh.jpg`} />
       </div>
 
       {/* PAIN SECTION */}
@@ -1671,7 +1673,9 @@ export default function App() {
       {/* VIDEO 2 — Platform Presentation (scattered) */}
       <VideoBox label="Platform Overview" title={<>The full <span className="grad-text">MyBizPal platform</span></>}
         subtitle="A complete walkthrough of features, integrations, and what goes live on day one."
-        duration="0:41" accentColor="#7B2FFF" videoId="YjyZL_sTN00" />
+        duration="0:41" accentColor="#7B2FFF" videoTitle="MyBizPal — Platform Overview"
+        videoSrc={`${CLOUDINARY_VIDEO}/f_auto,q_auto/v1785492510/mybizpal-zoe-promo-final-v2_rol3xu.mp4`}
+        posterSrc={`${CLOUDINARY_VIDEO}/so_auto,f_auto,q_auto,w_1800,c_limit/v1785492510/mybizpal-zoe-promo-final-v2_rol3xu.jpg`} />
 
       {/* REVENUE CALCULATOR */}
       <RevenueCalculator onOpenModal={openModal} />
