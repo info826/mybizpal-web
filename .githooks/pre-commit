@@ -1,0 +1,9 @@
+#!/bin/sh
+# Secret-scan guard (committed config, survives clones).
+# Activated by `npm install` (package.json "prepare" sets core.hooksPath) or
+# manually: git config core.hooksPath .githooks
+# No-ops gracefully on checkouts that predate the guard.
+root="$(git rev-parse --show-toplevel)"
+if [ -f "$root/scripts/check-secrets.cjs" ]; then
+  node "$root/scripts/check-secrets.cjs" || exit 1
+fi
