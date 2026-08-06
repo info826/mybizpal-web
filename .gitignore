@@ -1,5 +1,13 @@
-﻿node_modules/
+node_modules/
 dist/
+
+# env files (all variants, incl. local prod-secret backups)
 .env
 .env.local
+.env.*.local
+.env*
+!.env.example
+# tracked before this rule; carries ONLY the public API URL, no secrets
+!.env.production
+
 *.log
