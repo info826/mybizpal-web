@@ -517,7 +517,15 @@ textarea.form-input{min-height:88px;resize:vertical;font-family:'Manrope',sans-s
 .sofi-fab-btn:hover{box-shadow:0 10px 36px rgba(0,212,255,0.4);opacity:.92}
 .sofi-drag-hint{font-size:10px;color:rgba(255,255,255,0.35);text-align:center;margin-top:2px;pointer-events:none;font-family:'Manrope',sans-serif}
 .sofi-dot{position:absolute;top:2px;right:2px;width:10px;height:10px;background:#00D4FF;border-radius:50%;border:2px solid #0d0d1a}
-.sofi-fab-label{background:rgba(13,13,26,0.95);border:1px solid rgba(255,255,255,0.1);color:#F5F5F7;font-family:'Manrope',sans-serif;font-size:13px;font-weight:600;padding:8px 14px;border-radius:100px;white-space:nowrap;backdrop-filter:blur(12px)}
+/* Sits ABOVE the button inside the fixed, bottom-anchored flex column, so
+   appearing/dismissing moves nothing: the button's own position is fixed from
+   the bottom edge. No layout shift by construction. */
+.sofi-fab-label{background:rgba(13,13,26,0.95);border:1px solid rgba(255,255,255,0.1);color:#F5F5F7;font-family:'Manrope',sans-serif;font-size:13px;font-weight:600;padding:8px 10px 8px 14px;border-radius:100px;white-space:nowrap;backdrop-filter:blur(12px);display:inline-flex;align-items:center;gap:8px;animation:sofiLabelIn .2s ease-out both}
+@media (prefers-reduced-motion:reduce){.sofi-fab-label{animation:none}}
+@keyframes sofiLabelIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+.sofi-fab-label-x{background:none;border:none;color:rgba(255,255,255,0.45);font-size:12px;line-height:1;cursor:pointer;padding:2px 4px;border-radius:100px;font-family:'Manrope',sans-serif;transition:color .15s}
+.sofi-fab-label-x:hover{color:#F5F5F7}
+.sofi-fab-label-x:focus-visible{outline:2px solid #00D4FF;outline-offset:1px}
 .sofi-panel{position:fixed;bottom:100px;right:28px;z-index:499;width:340px;background:#0d0d1a;border:1px solid rgba(255,255,255,0.1);border-radius:20px;overflow:hidden;box-shadow:0 24px 80px rgba(0,0,0,0.6);display:flex;flex-direction:column;animation:panelIn .25s cubic-bezier(.34,1.4,.64,1) both}
 @keyframes panelIn{from{opacity:0;transform:translateY(14px) scale(.97)}to{opacity:1;transform:translateY(0) scale(1)}}
 .sofi-panel-header{background:linear-gradient(135deg,#0d0d1a,#111126);border-bottom:1px solid rgba(0,212,255,0.2);padding:16px 18px;display:flex;align-items:center;gap:12px}
@@ -1123,7 +1131,7 @@ const NOT_NAMES = new Set([
 
 function SofiWidget() {
   const [open, setOpen] = useState(false);
-  const [showLabel, setShowLabel] = useState(true);
+  const [showLabel, setShowLabel] = useState(false); // shown at 2s, see below
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [typing, setTyping] = useState(false);
@@ -1147,10 +1155,15 @@ function SofiWidget() {
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
 
+  // The greeting bubble now APPEARS at 2s rather than auto-hiding at 5s, and
+  // stays until dismissed. labelKilled guards the timer: drag, open or dismiss
+  // before 2s must not be undone by the timer firing afterwards.
+  const labelKilled = useRef(false);
   useEffect(() => {
-    const t = setTimeout(() => setShowLabel(false), 5000);
+    const t = setTimeout(() => { if (!labelKilled.current) setShowLabel(true); }, 2000);
     return () => clearTimeout(t);
   }, []);
+  const dismissLabel = () => { labelKilled.current = true; setShowLabel(false); };
 
   // prefers-reduced-motion, live. Read once up front so the first paint is
   // already correct (no video flash before the preference is applied), then
@@ -1177,8 +1190,10 @@ function SofiWidget() {
 
   // ── Drag handlers ──────────────────────────────────────────────────────
   const onPointerDown = (e) => {
-    // Only drag on the button itself, not inner elements
-    if (e.target.tagName === "BUTTON" || e.currentTarget === e.target) {
+    // Only drag on the FAB button itself, not inner elements. Tightened from
+    // tagName === "BUTTON" to the specific class: the label's dismiss ✕ is also
+    // a BUTTON, and the loose test would have made pressing it start a drag.
+    if (e.target.classList?.contains("sofi-fab-btn") || e.currentTarget === e.target) {
       dragging.current = true;
       didDrag.current = false;
       dragStart.current = {
@@ -1200,6 +1215,7 @@ function SofiWidget() {
     const newRight = Math.max(8, Math.min(window.innerWidth - 66, dragStart.current.right - dx));
     const newBottom = Math.max(8, Math.min(window.innerHeight - 66, dragStart.current.bottom - dy));
     setPos({ right: newRight, bottom: newBottom });
+    labelKilled.current = true;
     setShowLabel(false);
   };
 
@@ -1337,6 +1353,7 @@ function SofiWidget() {
     if (didDrag.current) { didDrag.current = false; return; }
     const next = !open;
     setOpen(next);
+    labelKilled.current = true;
     setShowLabel(false);
     if (next && messages.length === 0) {
       setTimeout(() => {
@@ -1418,7 +1435,22 @@ function SofiWidget() {
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
       >
-        {showLabel && !open && <div className="sofi-fab-label">Chat with Sofi 👋</div>}
+        {showLabel && !open && (
+          <div className="sofi-fab-label">
+            <span>Hi, I&rsquo;m Sofi. Ask me anything.</span>
+            <button
+              className="sofi-fab-label-x"
+              // stopPropagation on POINTERDOWN as well as click: the drag
+              // handler lives on the parent and would otherwise treat a press
+              // on this ✕ as the start of a drag.
+              onPointerDown={(e) => e.stopPropagation()}
+              onClick={(e) => { e.stopPropagation(); dismissLabel(); }}
+              aria-label="Dismiss"
+            >
+              ✕
+            </button>
+          </div>
+        )}
         <button
           className="sofi-fab-btn"
           onClick={toggleOpen}
