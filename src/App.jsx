@@ -1189,10 +1189,18 @@ function SofiWidget() {
   }, [open]);
 
   // ── Drag handlers ──────────────────────────────────────────────────────
+  // A press stays a TAP until it has travelled DRAG_SLOP; only then is it a
+  // drag. The old test was per-axis |dx| > 4, which is far tighter than any
+  // real finger: a tap routinely rolls 5-10px on glass, so ordinary taps were
+  // being classified as drags and having their click discarded by toggleOpen.
+  // Measured here as TOTAL displacement (hypotenuse) so diagonal movement is
+  // counted once rather than twice. 16px tolerates ~11px of roll on each axis
+  // and is still crossed within the first few millimetres of a real drag.
+  const DRAG_SLOP = 16;
+
   const onPointerDown = (e) => {
-    // Only drag on the FAB button itself, not inner elements. Tightened from
-    // tagName === "BUTTON" to the specific class: the label's dismiss ✕ is also
-    // a BUTTON, and the loose test would have made pressing it start a drag.
+    // Only drag on the FAB button itself, not inner elements — matched by class
+    // because the label's dismiss ✕ is also a BUTTON.
     if (e.target.classList?.contains("sofi-fab-btn") || e.currentTarget === e.target) {
       dragging.current = true;
       didDrag.current = false;
@@ -1202,8 +1210,10 @@ function SofiWidget() {
         bottom: pos.bottom,
         right: pos.right,
       };
-      e.currentTarget.setPointerCapture(e.pointerId);
-      e.preventDefault();
+      // NOTHING else happens on press. setPointerCapture and preventDefault
+      // used to fire here on every press; both belong to a real drag, and on
+      // touch they are exactly the things that can swallow the click that
+      // follows. They now happen once the gesture has proven itself a drag.
     }
   };
 
@@ -1211,16 +1221,30 @@ function SofiWidget() {
     if (!dragging.current) return;
     const dx = e.clientX - dragStart.current.x;
     const dy = e.clientY - dragStart.current.y;
-    if (Math.abs(dx) > 4 || Math.abs(dy) > 4) didDrag.current = true;
+    if (!didDrag.current) {
+      // Still within slop — this is a tap in progress. Touch nothing, so the
+      // click lands normally.
+      if (Math.hypot(dx, dy) < DRAG_SLOP) return;
+      didDrag.current = true;
+      // Capture now, while the pointer is still inside the 58px button, so the
+      // rest of the drag keeps arriving even once the finger leaves the div.
+      try { e.currentTarget.setPointerCapture(e.pointerId); } catch { /* unsupported */ }
+      labelKilled.current = true;
+      setShowLabel(false);
+    }
+    e.preventDefault();
     const newRight = Math.max(8, Math.min(window.innerWidth - 66, dragStart.current.right - dx));
     const newBottom = Math.max(8, Math.min(window.innerHeight - 66, dragStart.current.bottom - dy));
     setPos({ right: newRight, bottom: newBottom });
-    labelKilled.current = true;
-    setShowLabel(false);
   };
 
-  const onPointerUp = () => {
+  const onPointerUp = (e) => {
     dragging.current = false;
+    try {
+      if (e?.pointerId != null && e.currentTarget.hasPointerCapture?.(e.pointerId)) {
+        e.currentTarget.releasePointerCapture(e.pointerId);
+      }
+    } catch { /* nothing to release */ }
   };
 
   // WhatsApp deep link. Once the session exists, the pre-fill carries the
