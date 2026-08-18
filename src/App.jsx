@@ -349,9 +349,20 @@ h1,h2,h3{font-family:'Manrope',sans-serif;line-height:1.1;letter-spacing:-0.03em
 .cs-book-secondary:focus-visible{outline:2px solid #00D4FF;outline-offset:2px}
 
 /* MODAL */
-.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:600;display:flex;align-items:center;justify-content:center;padding:20px;opacity:0;pointer-events:none;transition:opacity .25s;backdrop-filter:blur(8px)}
+/* bottom:var(--mbp-banner-h) — CookieBanner publishes its measured height there
+   while it is showing, 0px otherwise. The overlay ends ABOVE the banner, so the
+   modal centres in the space that is actually visible and its lower edge (the
+   Submit button) can never sit under the banner. No z-index changes: the banner
+   stays on top, the modal simply stops being underneath it. Same mechanism as
+   the Sofi launcher. */
+.modal-overlay{position:fixed;inset:0;bottom:var(--mbp-banner-h,0px);background:rgba(0,0,0,0.75);z-index:600;display:flex;align-items:center;justify-content:center;padding:20px;opacity:0;pointer-events:none;transition:opacity .25s;backdrop-filter:blur(8px)}
 .modal-overlay.open{opacity:1;pointer-events:all}
-.modal-box{background:#0d0d1a;border:1px solid rgba(255,255,255,0.1);border-radius:24px;width:100%;max-width:520px;max-height:90vh;overflow-y:auto;position:relative;transform:translateY(16px) scale(.98);transition:transform .25s;scrollbar-width:thin}
+/* min(90vh, 100%): 90vh alone is measured against the VIEWPORT and so ignores
+   the banner entirely. 100% is the overlay's own (already banner-reduced,
+   already padded) height. With no banner 90vh is the smaller value, so the
+   modal looks exactly as it always has; with the banner up the percentage wins
+   and the box shrinks to fit above it, scrolling internally via overflow-y. */
+.modal-box{background:#0d0d1a;border:1px solid rgba(255,255,255,0.1);border-radius:24px;width:100%;max-width:520px;max-height:min(90vh,100%);overflow-y:auto;position:relative;transform:translateY(16px) scale(.98);transition:transform .25s;scrollbar-width:thin}
 .modal-overlay.open .modal-box{transform:translateY(0) scale(1)}
 .modal-header{padding:28px 28px 0;display:flex;align-items:flex-start;justify-content:space-between;gap:16px}
 .modal-close{background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.1);color:#A1A1A6;width:32px;height:32px;border-radius:50%;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-family:'Manrope',sans-serif;transition:all .2s}

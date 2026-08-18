@@ -57,6 +57,29 @@ Checks 1-8 run with consent pre-seeded so the cookie banner cannot mask the
 result. Checks 9-11 deliberately run with a fresh profile and no consent, which
 is the case where the banner used to cover the launcher completely.
 
+## Modal reachability checks
+
+`npm run check:modals` opens Contact Sales on a **fresh profile with the cookie
+banner showing** — the state a first-time lead is in — and asserts the whole
+form, including **Submit**, is actually reachable. It runs at 1280×900 and
+375×740.
+
+```bash
+npm run check:modals                          # defaults to :4173
+npm run check:modals -- http://localhost:5203/
+npm run check:modals -- https://mybizpal.ai/
+```
+
+This exists because the banner (`position:fixed; bottom:0; z-index:9999`) used
+to paint over the lower part of any tall modal, and Contact Sales step 2 is the
+tallest form on the site — so **Submit was covered and unclickable on the
+lead-submission path**, at both viewports, for anyone who had not yet answered
+the cookie banner. Nobody who had already accepted cookies could see it.
+
+It deliberately uses **no `force` clicks and no oversized viewport**. Both make
+a covered element look reachable, and catching a covered element is the entire
+point. The lead POST is stubbed, so running it never writes a real sales lead.
+
 ### Requirements and limits
 
 - Needs Chrome or Edge **already installed**. `playwright-core` drives the
