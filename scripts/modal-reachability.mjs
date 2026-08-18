@@ -48,14 +48,30 @@ const browser = await chromium.launch({ executablePath: CHROME, headless: true }
 
 // True when something other than the modal owns the point at an element's
 // centre — i.e. the element is visually covered.
-const coveredSelector = (page, selector) =>
-  page.evaluate((sel) => {
-    const el = document.querySelector(sel);
-    if (!el) return 'missing';
-    const r = el.getBoundingClientRect();
-    const top = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
-    return top && (top === el || el.contains(top) || top.contains(el)) ? false : true;
-  }, selector);
+//
+// Polled, because scrollIntoViewIfNeeded animates: reading the position
+// mid-scroll reports "covered" for an element that is merely still moving, and
+// live is slow enough to lose that race where a local preview is not. Polling
+// cannot mask a real overlap — if the banner is genuinely on top, every poll
+// returns covered and the check still fails.
+async function isCovered(page, selector, timeoutMs = 3000) {
+  const deadline = Date.now() + timeoutMs;
+  let last = true;
+  while (Date.now() < deadline) {
+    last = await page.evaluate((sel) => {
+      const el = document.querySelector(sel);
+      if (!el) return true;
+      const r = el.getBoundingClientRect();
+      // Off-screen counts as covered for our purposes: unreachable is unreachable.
+      if (r.bottom <= 0 || r.top >= window.innerHeight) return true;
+      const top = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+      return top && (top === el || el.contains(top) || top.contains(el)) ? false : true;
+    }, selector);
+    if (last === false) return false;
+    await page.waitForTimeout(150);
+  }
+  return last;
+}
 
 for (const { label, viewport, isMobile, hasTouch } of VIEWPORTS) {
   console.log(`\n=== ${label} — fresh profile, cookie banner showing`);
@@ -74,7 +90,7 @@ for (const { label, viewport, isMobile, hasTouch } of VIEWPORTS) {
   await page.getByRole('button', { name: /contact sales/i }).first().click();
   await page.waitForSelector('.modal-overlay.open', { timeout: 10000 });
 
-  rec(`${label}: modal is not covered by the banner`, (await coveredSelector(page, M)) === false);
+  rec(`${label}: modal is not covered by the banner`, (await isCovered(page, M)) === false);
 
   // Step 1 — plain click, no force. If the banner is on top this throws.
   await page.locator(`${M} input[placeholder="you@company.com"]`).fill('reachability@example.com');
@@ -99,11 +115,11 @@ for (const { label, viewport, isMobile, hasTouch } of VIEWPORTS) {
   const submit = page.locator(`${M} button.form-submit`);
   await submit.scrollIntoViewIfNeeded();
   rec(`${label}: Submit is not covered by the banner`,
-    (await coveredSelector(page, `${M} button.form-submit`)) === false);
+    (await isCovered(page, `${M} button.form-submit`)) === false);
 
   let clicked = true;
   try {
-    await submit.click({ timeout: 8000 });          // no force — this is the assertion
+    await submit.click({ timeout: 15000 });          // no force — this is the assertion
   } catch (err) {
     clicked = false;
     rec(`${label}: Submit is clickable`, false, String(err.message).split('\n')[0]);
