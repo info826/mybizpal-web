@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import PhoneInput, { isValidPhoneNumber } from "react-phone-number-input";
 import "react-phone-number-input/style.css";
-import CookieBanner from "./CookieBanner";
+import CookieBanner, { CONSENT_KEY } from "./CookieBanner";
 
 const LOGO_FULL = "https://res.cloudinary.com/dp8novljz/image/upload/MyBizPal_Full_Logo_Dark_BG_R_gud0ag.png";
 const LOGO_ICON = "https://res.cloudinary.com/dp8novljz/image/upload/MyBizPal_Full_Logo_Dark_BG_R_gud0ag.png";
@@ -339,6 +339,14 @@ h1,h2,h3{font-family:'Manrope',sans-serif;line-height:1.1;letter-spacing:-0.03em
 .form-submit:disabled{opacity:.4;cursor:not-allowed;transform:none;box-shadow:none}
 .form-note{font-size:12px;color:#6E6E73;text-align:center;margin-top:10px}
 .success-state{text-align:center;padding:40px 0}
+/* Contact-sales success actions. Own class names on purpose: .success-state is
+   shared with DemoForm, which must not inherit any of this. */
+.cs-book-actions{display:flex;flex-direction:column;align-items:center;gap:14px}
+.cs-book-btn{margin:0 auto;display:inline-flex}
+.cs-book-btn:disabled{opacity:.6;cursor:default}
+.cs-book-secondary{background:none;border:none;color:#A1A1A6;font-family:'Manrope',sans-serif;font-size:14px;cursor:pointer;text-decoration:underline;text-underline-offset:3px;padding:4px 8px;border-radius:8px;transition:color .15s}
+.cs-book-secondary:hover{color:#F5F5F7}
+.cs-book-secondary:focus-visible{outline:2px solid #00D4FF;outline-offset:2px}
 
 /* MODAL */
 .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:600;display:flex;align-items:center;justify-content:center;padding:20px;opacity:0;pointer-events:none;transition:opacity .25s;backdrop-filter:blur(8px)}
@@ -849,6 +857,65 @@ const SALES_SIZES = ["1-10", "11-50", "51-200", "201-500", "500+"];
 const SALES_PLATFORMS = ["Voice agent", "WhatsApp", "SMS", "Google Calendar booking", "GoHighLevel", "HubSpot", "N8N automations", "Outbound calling", "Website chat widget", "All channels"];
 const SALES_COUNTRIES = ["Afghanistan", "Albania", "Algeria", "Andorra", "Angola", "Antigua and Barbuda", "Argentina", "Armenia", "Australia", "Austria", "Azerbaijan", "Bahamas", "Bahrain", "Bangladesh", "Barbados", "Belarus", "Belgium", "Belize", "Benin", "Bhutan", "Bolivia", "Bosnia and Herzegovina", "Botswana", "Brazil", "Brunei", "Bulgaria", "Burkina Faso", "Burundi", "Cabo Verde", "Cambodia", "Cameroon", "Canada", "Central African Republic", "Chad", "Chile", "China", "Colombia", "Comoros", "Congo (Brazzaville)", "Congo (Kinshasa)", "Costa Rica", "Côte d'Ivoire", "Croatia", "Cuba", "Cyprus", "Czechia", "Denmark", "Djibouti", "Dominica", "Dominican Republic", "Ecuador", "Egypt", "El Salvador", "Equatorial Guinea", "Eritrea", "Estonia", "Eswatini", "Ethiopia", "Fiji", "Finland", "France", "Gabon", "Gambia", "Georgia", "Germany", "Ghana", "Greece", "Grenada", "Guatemala", "Guinea", "Guinea-Bissau", "Guyana", "Haiti", "Honduras", "Hungary", "Iceland", "India", "Indonesia", "Iran", "Iraq", "Ireland", "Israel", "Italy", "Jamaica", "Japan", "Jordan", "Kazakhstan", "Kenya", "Kiribati", "Kosovo", "Kuwait", "Kyrgyzstan", "Laos", "Latvia", "Lebanon", "Lesotho", "Liberia", "Libya", "Liechtenstein", "Lithuania", "Luxembourg", "Madagascar", "Malawi", "Malaysia", "Maldives", "Mali", "Malta", "Marshall Islands", "Mauritania", "Mauritius", "Mexico", "Micronesia", "Moldova", "Monaco", "Mongolia", "Montenegro", "Morocco", "Mozambique", "Myanmar", "Namibia", "Nauru", "Nepal", "Netherlands", "New Zealand", "Nicaragua", "Niger", "Nigeria", "North Korea", "North Macedonia", "Norway", "Oman", "Pakistan", "Palau", "Palestine", "Panama", "Papua New Guinea", "Paraguay", "Peru", "Philippines", "Poland", "Portugal", "Qatar", "Romania", "Russia", "Rwanda", "Saint Kitts and Nevis", "Saint Lucia", "Saint Vincent and the Grenadines", "Samoa", "San Marino", "São Tomé and Príncipe", "Saudi Arabia", "Senegal", "Serbia", "Seychelles", "Sierra Leone", "Singapore", "Slovakia", "Slovenia", "Solomon Islands", "Somalia", "South Africa", "South Korea", "South Sudan", "Spain", "Sri Lanka", "Sudan", "Suriname", "Sweden", "Switzerland", "Syria", "Taiwan", "Tajikistan", "Tanzania", "Thailand", "Timor-Leste", "Togo", "Tonga", "Trinidad and Tobago", "Tunisia", "Turkey", "Turkmenistan", "Tuvalu", "Uganda", "Ukraine", "United Arab Emirates", "United Kingdom", "United States", "Uruguay", "Uzbekistan", "Vanuatu", "Vatican City", "Venezuela", "Vietnam", "Yemen", "Zambia", "Zimbabwe"];
 
+// ── Calendly (success step only) ────────────────────────────────────────────
+const CALENDLY_URL = "https://calendly.com/mybizpal-info/30min";
+const CALENDLY_CSS = "https://assets.calendly.com/assets/external/widget.css";
+const CALENDLY_JS = "https://assets.calendly.com/assets/external/widget.js";
+
+// Marketing consent means the "all" choice in CookieBanner. NOT-YET-CHOSEN
+// counts as no consent, which is the case for anyone who reaches this step on a
+// first visit — they get the new tab, not the embedded widget.
+const hasMarketingConsent = () => {
+  try { return localStorage.getItem(CONSENT_KEY) === "all"; } catch { return false; }
+};
+
+// Lazily injected on FIRST CLICK, never at page load — Calendly's widget is
+// ~90KB of third-party JS and nobody who does not book should pay for it.
+let calendlyLoad = null;
+function loadCalendly() {
+  if (typeof window !== "undefined" && window.Calendly) return Promise.resolve();
+  if (calendlyLoad) return calendlyLoad;
+  calendlyLoad = new Promise((resolve, reject) => {
+    if (!document.getElementById("calendly-css")) {
+      const link = document.createElement("link");
+      link.id = "calendly-css";
+      link.rel = "stylesheet";
+      link.href = CALENDLY_CSS;
+      document.head.appendChild(link);
+    }
+    const s = document.createElement("script");
+    s.id = "calendly-js";
+    s.src = CALENDLY_JS;
+    s.async = true;
+    s.onload = resolve;
+    // Reset the cache so a later click can retry rather than being stuck on a
+    // permanently rejected promise.
+    s.onerror = () => { calendlyLoad = null; reject(new Error("Calendly script blocked or unavailable")); };
+    document.head.appendChild(s);
+  });
+  return calendlyLoad;
+}
+
+// The site has no analytics layer yet (CookieBanner's loadAnalytics is a
+// commented-out stub), so this is a GTM-shaped push that starts reporting the
+// day GA/GTM is added and costs nothing until then. Never allowed to throw:
+// analytics must not be able to break a booking CTA.
+function trackEvent(event, params = {}) {
+  try {
+    window.dataLayer = window.dataLayer || [];
+    window.dataLayer.push({ event, ...params });
+  } catch { /* analytics is never load-bearing */ }
+}
+
+// utm_content carries the business email — the join key back to
+// sales_leads.business_email (ruled 18 Aug 2026). The API replies
+// {success:true} with no row id (it inserts with Prefer: return=minimal), so
+// there is no lead id to carry; email is the key the lead is actually stored
+// under. A repeat enquirer produces two rows sharing one key, so joins should
+// use email + timestamp.
+const calendlyParams = (name, email) =>
+  new URLSearchParams({ name, email, utm_content: email }).toString();
+
 function ContactSalesForm({ onClose, plan = "" }) {
   const [step, setStep] = useState(1);
   const [f, setF] = useState({
@@ -863,6 +930,7 @@ function ContactSalesForm({ onClose, plan = "" }) {
   const [loading, setLoading] = useState(false);
   const [done, setDone] = useState(false);
   const [error, setError] = useState(false);
+  const [booking, setBooking] = useState(false);
 
   const emailOk = v => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
   const ch = (k, v) => { setF(p => ({ ...p, [k]: v })); if (errs[k]) setErrs(p => ({ ...p, [k]: undefined })); };
@@ -924,12 +992,64 @@ function ContactSalesForm({ onClose, plan = "" }) {
     } finally { setLoading(false); }
   };
 
+  // Success step only. Nothing above this is touched: steps 1-2, validation and
+  // the lead submission are exactly as they were, and the thank-you still only
+  // renders on a CONFIRMED write.
+  const bookCall = async () => {
+    const name = `${f.firstName} ${f.lastName}`.trim();
+    const email = f.businessEmail.trim();
+    const consented = hasMarketingConsent();
+
+    trackEvent("contact_sales_book_call", {
+      method: consented ? "popup" : "new_tab",
+      plan: plan || "elite",
+    });
+
+    const openInTab = () => window.open(`${CALENDLY_URL}?${calendlyParams(name, email)}`, "_blank", "noopener,noreferrer");
+
+    // No marketing consent (including "not chosen yet"): do NOT inject
+    // Calendly's script into this page. Same booking, same prefill, their
+    // domain and their consent.
+    if (!consented) { openInTab(); return; }
+
+    setBooking(true);
+    try {
+      await loadCalendly();
+      window.Calendly.initPopupWidget({
+        url: CALENDLY_URL,
+        prefill: { name, email, firstName: f.firstName.trim(), lastName: f.lastName.trim() },
+        utm: { utmContent: email },
+      });
+    } catch {
+      // Ad blockers block assets.calendly.com routinely. Falling through to the
+      // tab means the button always does SOMETHING — a CTA that silently does
+      // nothing is the exact failure this codebase just spent two days on.
+      openInTab();
+    } finally {
+      setBooking(false);
+    }
+  };
+
   if (done) return (
     <div className="success-state">
       <div style={{ fontSize: 52, marginBottom: 16 }}>✅</div>
       <div style={{ fontSize: 22, fontWeight: 800, marginBottom: 8, color: "#F5F5F7" }}>Thanks — our team will be in touch shortly.</div>
       <p style={{ fontSize: 15, color: "#A1A1A6", marginBottom: 24 }}>We've received your Elite enquiry and will reach out to {f.businessEmail} soon.</p>
-      {onClose && <button className="btn-primary" style={{ margin: "0 auto", display: "inline-flex" }} onClick={onClose}>Close ✕</button>}
+      <div className="cs-book-actions">
+        <button
+          type="button"
+          className="btn-primary cs-book-btn"
+          onClick={bookCall}
+          disabled={booking}
+        >
+          {booking ? "Opening…" : "Book a 30-min call"}
+        </button>
+        {onClose && (
+          <button type="button" className="cs-book-secondary" onClick={onClose}>
+            Close, I&rsquo;ll wait for your call.
+          </button>
+        )}
+      </div>
     </div>
   );
 

@@ -3,7 +3,9 @@
 
 import { useState, useEffect, useRef } from "react";
 
-const CONSENT_KEY = "mbp_cookie_consent";
+// Exported so consent-gated features elsewhere read the SAME key rather than
+// re-typing the string and silently drifting from it.
+export const CONSENT_KEY = "mbp_cookie_consent";
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
 
 const logConsent = async (type) => {
