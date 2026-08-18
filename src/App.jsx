@@ -11,6 +11,15 @@ const TURNSTILE_SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY;
 
 // ── Integration logos (Cloudinary-hosted, trimmed & fitted to 72px height) ───
 const CLD = "https://res.cloudinary.com/dp8novljz/image/upload/f_auto,q_auto,e_trim,h_72,c_fit";
+
+// ── Sofi launcher avatar (Cloudinary video) ─────────────────────────────────
+// Verified 18 Aug 2026: webm 45KB (vp9), mp4 36KB (avc1), poster 4.9KB.
+// The poster is derived from the MP4's public id (sofi-wave_wfxmpt) while the
+// webm is a different id (sofi-wave_rzws1b) — that mismatch is in the source
+// assets, not a typo here; all three resolve.
+const SOFI_AVATAR_BASE = "https://res.cloudinary.com/dp8novljz/video/upload/v1787079094";
+const SOFI_AVATAR_POSTER =
+  "https://res.cloudinary.com/dp8novljz/video/upload/so_1.5,f_jpg,w_256,h_256/sofi-wave_wfxmpt.jpg";
 const INTEGRATIONS = [
   { name: "WhatsApp",        logo: `${CLD}/WhatsApp_Logo_b8suk6.png`        },
   { name: "Google Calendar", logo: `${CLD}/Google_Calendar_Logo_wj8gjo.png` },
@@ -494,7 +503,16 @@ textarea.form-input{min-height:88px;resize:vertical;font-family:'Manrope',sans-s
 
 /* SOFI WIDGET */
 .sofi-fab{position:fixed;z-index:500;display:flex;flex-direction:column;align-items:flex-end;gap:10px;touch-action:none;user-select:none}
-.sofi-fab-btn{width:58px;height:58px;border-radius:50%;background:#0d0d1a;border:1.5px solid rgba(0,212,255,0.5);cursor:grab;display:flex;align-items:center;justify-content:center;box-shadow:0 6px 28px rgba(0,212,255,0.15);position:relative;transition:box-shadow .2s}
+/* 58px OUTER stays 58px — box-sizing:border-box is global, so the 2px ring
+   eats inward (54px of video) rather than growing the button. The ring is the
+   brand gradient painted in the border box, with the panel colour filling the
+   padding box on top; that is the only way to get a gradient border without a
+   wrapper element (which would break the drag target test below). */
+.sofi-fab-btn{width:58px;height:58px;border-radius:50%;background-image:linear-gradient(#0d0d1a,#0d0d1a),linear-gradient(135deg,#00D4FF,#7B2FFF,#4060FF);background-origin:border-box;background-clip:padding-box,border-box;border:2px solid transparent;cursor:grab;display:flex;align-items:center;justify-content:center;box-shadow:0 6px 28px rgba(0,212,255,0.15);position:relative;transition:box-shadow .2s;padding:0}
+/* pointer-events:none is LOAD-BEARING, not cosmetic: onPointerDown only starts
+   a drag when the event target is the FAB button itself. Let the video become
+   the target and dragging silently stops working. */
+.sofi-fab-avatar{width:100%;height:100%;object-fit:cover;border-radius:50%;display:block;pointer-events:none}
 .sofi-fab-btn:active{cursor:grabbing}
 .sofi-fab-btn:hover{box-shadow:0 10px 36px rgba(0,212,255,0.4);opacity:.92}
 .sofi-drag-hint{font-size:10px;color:rgba(255,255,255,0.35);text-align:center;margin-top:2px;pointer-events:none;font-family:'Manrope',sans-serif}
@@ -1134,6 +1152,21 @@ function SofiWidget() {
     return () => clearTimeout(t);
   }, []);
 
+  // prefers-reduced-motion, live. Read once up front so the first paint is
+  // already correct (no video flash before the preference is applied), then
+  // track changes — users do toggle this at OS level mid-session.
+  const [reducedMotion, setReducedMotion] = useState(
+    () => typeof window !== "undefined" &&
+      window.matchMedia?.("(prefers-reduced-motion: reduce)").matches === true
+  );
+  useEffect(() => {
+    const mq = window.matchMedia?.("(prefers-reduced-motion: reduce)");
+    if (!mq) return;
+    const onChange = (e) => setReducedMotion(e.matches);
+    mq.addEventListener("change", onChange);
+    return () => mq.removeEventListener("change", onChange);
+  }, []);
+
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, typing]);
@@ -1325,6 +1358,39 @@ function SofiWidget() {
     </svg>
   );
 
+  // The launcher avatar. Reduced motion is handled in JS, not CSS: a media
+  // query can hide a <video> but cannot stop it existing, and an element that
+  // autoplays behind display:none is still decoding frames. Honouring the
+  // preference means never putting the video in the DOM at all — so the poster
+  // renders as a plain <img> instead.
+  const sofiAvatar = reducedMotion ? (
+    <img
+      className="sofi-fab-avatar"
+      src={SOFI_AVATAR_POSTER}
+      alt=""
+      width="54"
+      height="54"
+      decoding="async"
+    />
+  ) : (
+    <video
+      className="sofi-fab-avatar"
+      autoPlay
+      muted
+      loop
+      playsInline
+      // playsInline is what stops iOS Safari hijacking this into a fullscreen
+      // player on autoplay; muted is what makes autoplay permissible at all.
+      poster={SOFI_AVATAR_POSTER}
+      aria-hidden="true"
+      tabIndex={-1}
+    >
+      {/* WebM first: Chrome/Firefox take it, Safari falls through to MP4. */}
+      <source src={`${SOFI_AVATAR_BASE}/sofi-wave_rzws1b.webm`} type="video/webm" />
+      <source src={`${SOFI_AVATAR_BASE}/sofi-wave_wfxmpt.mp4`} type="video/mp4" />
+    </video>
+  );
+
   // Panel position — opens above and to the left of the button
   const panelStyle = {
     position: "fixed",
@@ -1358,7 +1424,7 @@ function SofiWidget() {
           onClick={toggleOpen}
           aria-label="Chat with Sofi"
         >
-          {open ? <span style={{ fontSize: 20, color: "#fff", fontFamily: "Manrope,sans-serif" }}>✕</span> : waIconSvg}
+          {open ? <span style={{ fontSize: 20, color: "#fff", fontFamily: "Manrope,sans-serif" }}>✕</span> : sofiAvatar}
           {!open && <span className="sofi-dot" />}
         </button>
         {!open && <div className="sofi-drag-hint">drag to move</div>}
