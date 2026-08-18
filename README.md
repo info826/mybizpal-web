@@ -80,6 +80,36 @@ It deliberately uses **no `force` clicks and no oversized viewport**. Both make
 a covered element look reachable, and catching a covered element is the entire
 point. The lead POST is stubbed, so running it never writes a real sales lead.
 
+## Contact Sales success-step checks
+
+`npm run check:success` drives the whole Contact Sales form to its success step
+and asserts the calendar-first booking surface, at 1280×900, 375×740 and
+390×844 — 63 checks.
+
+```bash
+npm run check:success -- http://localhost:5205/
+npm run check:success -- https://mybizpal.ai/
+```
+
+The success step is the primary booking path, so its **fallbacks** matter more
+than its happy path. All four routes are asserted at every viewport:
+
+| Case | Expected |
+|---|---|
+| Consent + working embed | inline widget mounts, skeleton resolves, prefill and `utm_content` correct, `contact_sales_book_call` with `method: inline` |
+| Booking made | a `calendly.event_scheduled` message **from calendly.com** pushes `contact_sales_call_booked` — a same-origin forgery does not |
+| Iframe stalls | 6s timeout flips to the button version; no permanent skeleton |
+| Script blocked | falls back to the button immediately |
+| No marketing consent (`essential` or unset) | button version, and Calendly's script is **never requested** |
+
+The lead POST is intercepted, so running it never writes a real sales lead.
+Calendly's CDN is intercepted too — that is what makes "blocked script" and
+"stalled iframe" testable at all, and it keeps the run deterministic.
+
+**Limit:** because the CDN is stubbed, this exercises *our* code against a
+stand-in widget, not Calendly's real embed. That the real calendar renders and
+takes a booking still needs a human to look once.
+
 ### Requirements and limits
 
 - Needs Chrome or Edge **already installed**. `playwright-core` drives the

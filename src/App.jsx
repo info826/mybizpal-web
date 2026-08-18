@@ -347,6 +347,35 @@ h1,h2,h3{font-family:'Manrope',sans-serif;line-height:1.1;letter-spacing:-0.03em
 .cs-book-secondary{background:none;border:none;color:#A1A1A6;font-family:'Manrope',sans-serif;font-size:14px;cursor:pointer;text-decoration:underline;text-underline-offset:3px;padding:4px 8px;border-radius:8px;transition:color .15s}
 .cs-book-secondary:hover{color:#F5F5F7}
 .cs-book-secondary:focus-visible{outline:2px solid #00D4FF;outline-offset:2px}
+/* Success step v2 — calendar-first. Still cs-* only: .success-state is shared
+   with DemoForm, which inherits none of this. */
+.cs-success{padding:24px 0 28px;text-align:left}
+.cs-success-head{display:flex;align-items:flex-start;gap:10px;margin-bottom:16px}
+.cs-tick{font-size:20px;line-height:1.3;flex-shrink:0}
+.cs-success-title{font-family:'Manrope',sans-serif;font-size:17px;font-weight:700;color:#F5F5F7;line-height:1.35;margin:0}
+.cs-success-sub{font-size:15px;color:#A1A1A6;margin:0 0 20px;text-align:center}
+.cs-book-secondary-below{display:block;margin:16px auto 0}
+/* The modal grows to fit the embed and, past its max-height, scrolls
+   internally — the overlay's --mbp-banner-h inset keeps all of it clear of the
+   cookie banner. The embed also wants more room than the 520px form: :has() is
+   progressive, so where it is unsupported the modal stays 520px and still
+   works. */
+.modal-box:has(.cs-cal-wrap){max-width:680px}
+.cs-cal-wrap{position:relative;min-height:640px;border-radius:14px;overflow:hidden;background:#0f0f1e}
+.cs-cal-embed{min-height:640px}
+.cs-cal-embed iframe{border-radius:14px}
+.cs-cal-skeleton{position:absolute;inset:0;padding:20px;display:flex;flex-direction:column;gap:12px;background:#0f0f1e;pointer-events:none}
+.cs-sk-line{height:12px;border-radius:6px;background:linear-gradient(90deg,rgba(255,255,255,0.05),rgba(255,255,255,0.11),rgba(255,255,255,0.05));background-size:200% 100%;animation:csSkShimmer 1.3s ease-in-out infinite}
+.cs-sk-line.cs-sk-title{height:18px;width:55%}
+.cs-sk-line.short{width:40%}
+.cs-sk-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:6px 0}
+.cs-sk-cell{height:56px;border-radius:10px;background:linear-gradient(90deg,rgba(255,255,255,0.05),rgba(255,255,255,0.11),rgba(255,255,255,0.05));background-size:200% 100%;animation:csSkShimmer 1.3s ease-in-out infinite}
+@keyframes csSkShimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+@media (prefers-reduced-motion:reduce){.cs-sk-line,.cs-sk-cell{animation:none}}
+@media (max-width:640px){
+  .cs-cal-wrap,.cs-cal-embed{min-height:560px}
+  .cs-success-title{font-size:16px}
+}
 
 /* MODAL */
 /* bottom:var(--mbp-banner-h) — CookieBanner publishes its measured height there
@@ -927,6 +956,21 @@ function trackEvent(event, params = {}) {
 const calendlyParams = (name, email) =>
   new URLSearchParams({ name, email, utm_content: email }).toString();
 
+// Calendly talks to the host page by postMessage. Origin-checked, because any
+// page can post to us and we act on these (analytics, and cancelling the
+// fallback timeout).
+const CALENDLY_ORIGIN = "https://calendly.com";
+const calendlyEventName = (e) => {
+  if (e.origin !== CALENDLY_ORIGIN) return null;
+  const name = e.data && e.data.event;
+  return typeof name === "string" && name.startsWith("calendly.") ? name : null;
+};
+
+// How long the embed gets to show something before we give up on it and fall
+// back to the button. A blank modal or a spinner that never resolves is worse
+// than a plain link.
+const INLINE_LOAD_TIMEOUT_MS = 6000;
+
 function ContactSalesForm({ onClose, plan = "" }) {
   const [step, setStep] = useState(1);
   const [f, setF] = useState({
@@ -942,6 +986,16 @@ function ContactSalesForm({ onClose, plan = "" }) {
   const [done, setDone] = useState(false);
   const [error, setError] = useState(false);
   const [booking, setBooking] = useState(false);
+  // 'pending' → script loading, skeleton on screen; 'inline' → embed;
+  // 'button' → the original button version, which is also every fallback.
+  //
+  // Seeded from consent SYNCHRONOUSLY so someone without marketing consent
+  // never sees a calendar skeleton flash before the button they were always
+  // going to get. Consent is re-checked in the effect below anyway.
+  const [bookMode, setBookMode] = useState(() => (hasMarketingConsent() ? "pending" : "button"));
+  const [inlineReady, setInlineReady] = useState(false);
+  const inlineRef = useRef(null);
+  const inlineReadyRef = useRef(false);
 
   const emailOk = v => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
   const ch = (k, v) => { setF(p => ({ ...p, [k]: v })); if (errs[k]) setErrs(p => ({ ...p, [k]: undefined })); };
@@ -1003,6 +1057,106 @@ function ContactSalesForm({ onClose, plan = "" }) {
     } finally { setLoading(false); }
   };
 
+  // Decide the success step's booking surface the moment the lead is CONFIRMED
+  // written — not at page load. Consent is checked first so a visitor without
+  // marketing consent never has Calendly's script injected into this page at
+  // all; they get the button, which opens Calendly on Calendly's own domain.
+  useEffect(() => {
+    if (!done) return;
+    if (!hasMarketingConsent()) { setBookMode("button"); return; }
+    let cancelled = false;
+    loadCalendly()
+      .then(() => { if (!cancelled) setBookMode("inline"); })
+      .catch(() => { if (!cancelled) setBookMode("button"); });   // blocked script → button
+    return () => { cancelled = true; };
+  }, [done]);
+
+  // Mount the embed, and guarantee it either shows something or gets out of the
+  // way. Three things can mark it ready: any calendly.* postMessage, the
+  // iframe's own load event, or nothing — in which case the timeout flips to
+  // the button. There is no path that leaves a blank modal or a permanent
+  // skeleton.
+  useEffect(() => {
+    if (bookMode !== "inline") return;
+    const host = inlineRef.current;
+    if (!host || !window.Calendly) { setBookMode("button"); return; }
+
+    const email = f.businessEmail.trim();
+    const name = `${f.firstName} ${f.lastName}`.trim();
+    host.innerHTML = "";
+    try {
+      window.Calendly.initInlineWidget({
+        url: CALENDLY_URL,
+        parentElement: host,
+        prefill: { name, email, firstName: f.firstName.trim(), lastName: f.lastName.trim() },
+        utm: { utmContent: email },
+      });
+    } catch {
+      setBookMode("button");
+      return;
+    }
+    trackEvent("contact_sales_book_call", { method: "inline", plan: plan || "elite" });
+
+    const markReady = () => {
+      if (inlineReadyRef.current) return;
+      inlineReadyRef.current = true;
+      setInlineReady(true);
+      clearTimeout(timer);
+    };
+    const timer = setTimeout(() => {
+      if (!inlineReadyRef.current) setBookMode("button");
+    }, INLINE_LOAD_TIMEOUT_MS);
+
+    const onMessage = (e) => {
+      const name = calendlyEventName(e);
+      if (!name) return;
+      markReady();
+      // The whole point of the calendar-first step: a booking actually made.
+      if (name === "calendly.event_scheduled") {
+        trackEvent("contact_sales_call_booked", { method: "inline", plan: plan || "elite" });
+      }
+    };
+    window.addEventListener("message", onMessage);
+
+    // Second ready signal: the iframe's own load. Calendly injects it
+    // asynchronously, so watch for it with a MutationObserver rather than a
+    // poll — a poll can arrive AFTER a fast iframe has already loaded, miss the
+    // event entirely, and leave the skeleton up until the 6s timeout tears down
+    // an embed that was working perfectly. (Caught by the harness doing exactly
+    // that with a data: URL iframe.)
+    const attachFrame = (frame) => {
+      if (!frame) return false;
+      frame.addEventListener("load", markReady, { once: true });
+      try {
+        // Same-origin and already finished — the load event will never come.
+        if (frame.contentDocument && frame.contentDocument.readyState === "complete") markReady();
+      } catch {
+        // Cross-origin, which the real Calendly iframe is: we cannot inspect
+        // it, and do not need to — its postMessage is the primary signal.
+      }
+      return true;
+    };
+
+    let observer = null;
+    if (!attachFrame(host.querySelector("iframe"))) {
+      observer = new MutationObserver(() => {
+        const frame = host.querySelector("iframe");
+        if (!frame) return;
+        observer.disconnect();
+        observer = null;
+        attachFrame(frame);
+      });
+      observer.observe(host, { childList: true, subtree: true });
+    }
+
+    return () => {
+      clearTimeout(timer);
+      observer?.disconnect();
+      window.removeEventListener("message", onMessage);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [bookMode]);
+
   // Success step only. Nothing above this is touched: steps 1-2, validation and
   // the lead submission are exactly as they were, and the thank-you still only
   // renders on a CONFIRMED write.
@@ -1042,25 +1196,57 @@ function ContactSalesForm({ onClose, plan = "" }) {
   };
 
   if (done) return (
-    <div className="success-state">
-      <div style={{ fontSize: 52, marginBottom: 16 }}>✅</div>
-      <div style={{ fontSize: 22, fontWeight: 800, marginBottom: 8, color: "#F5F5F7" }}>Thanks — our team will be in touch shortly.</div>
-      <p style={{ fontSize: 15, color: "#A1A1A6", marginBottom: 24 }}>We've received your Elite enquiry and will reach out to {f.businessEmail} soon.</p>
-      <div className="cs-book-actions">
-        <button
-          type="button"
-          className="btn-primary cs-book-btn"
-          onClick={bookCall}
-          disabled={booking}
-        >
-          {booking ? "Opening…" : "Book a 30-min call"}
-        </button>
-        {onClose && (
-          <button type="button" className="cs-book-secondary" onClick={onClose}>
-            Close, I&rsquo;ll wait for your call.
-          </button>
-        )}
+    <div className="success-state cs-success">
+      <div className="cs-success-head">
+        <span className="cs-tick" aria-hidden="true">✅</span>
+        <h3 className="cs-success-title">
+          Enquiry received. Grab a time now, or close and we&rsquo;ll call you.
+        </h3>
       </div>
+
+      {bookMode === "inline" || bookMode === "pending" ? (
+        <div className="cs-cal-wrap">
+          {/* The embed's own host element. Calendly owns everything inside it.
+              Rendered while 'pending' too so the ref exists the moment the
+              script resolves and the skeleton covers the script load as well as
+              the iframe load. */}
+          <div ref={inlineRef} className="cs-cal-embed" />
+          {(!inlineReady || bookMode === "pending") && (
+            <div className="cs-cal-skeleton" aria-hidden="true">
+              <div className="cs-sk-line cs-sk-title" />
+              <div className="cs-sk-grid">
+                {Array.from({ length: 8 }).map((_, i) => <div key={i} className="cs-sk-cell" />)}
+              </div>
+              <div className="cs-sk-line" />
+              <div className="cs-sk-line short" />
+            </div>
+          )}
+        </div>
+      ) : (
+        <>
+          <p className="cs-success-sub">
+            We&rsquo;ve received your Elite enquiry and will reach out to {f.businessEmail} soon.
+          </p>
+          {/* Every fallback lands here: no marketing consent, a blocked script,
+              or an embed that did not show anything within 6s. */}
+          <div className="cs-book-actions">
+            <button
+              type="button"
+              className="btn-primary cs-book-btn"
+              onClick={bookCall}
+              disabled={booking || bookMode === "pending"}
+            >
+              {booking ? "Opening…" : "Book a 30-min call"}
+            </button>
+          </div>
+        </>
+      )}
+
+      {onClose && (
+        <button type="button" className="cs-book-secondary cs-book-secondary-below" onClick={onClose}>
+          Close, I&rsquo;ll wait for your call.
+        </button>
+      )}
     </div>
   );
 
