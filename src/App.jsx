@@ -1435,7 +1435,9 @@ function SofiWidget() {
   // Panel position — opens above and to the left of the button
   const panelStyle = {
     position: "fixed",
-    bottom: pos.bottom + 68,
+    // Lifts with the button (see the FAB's style) so the panel cannot open
+    // underneath the banner either.
+    bottom: `calc(${pos.bottom + 68}px + var(--mbp-banner-h, 0px))`,
     right: pos.right,
     zIndex: 499,
     width: 340,
@@ -1454,7 +1456,12 @@ function SofiWidget() {
       {/* Draggable FAB */}
       <div
         className="sofi-fab"
-        style={{ bottom: pos.bottom, right: pos.right }}
+        // --mbp-banner-h is published by CookieBanner: the banner's measured
+        // height while it is up, 0px otherwise. Lifting the launcher clear of
+        // it is why no z-index changed — the banner stays on top, the launcher
+        // simply stops being underneath it. Restores itself on consent, when
+        // the variable goes back to 0px.
+        style={{ bottom: `calc(${pos.bottom}px + var(--mbp-banner-h, 0px))`, right: pos.right }}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}

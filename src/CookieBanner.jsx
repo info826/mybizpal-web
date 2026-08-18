@@ -1,7 +1,7 @@
 // CookieBanner.jsx — PECR + UK GDPR compliant cookie consent
 // Consent is logged via the MyBizPal API (server records the real IP for the audit trail)
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
 const CONSENT_KEY = "mbp_cookie_consent";
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:4000";
@@ -23,9 +23,38 @@ const logConsent = async (type) => {
   }
 };
 
+// Published so anything anchored to the bottom of the viewport can sit clear of
+// the banner. The banner is z-index 9999 and full-width, so it covers the Sofi
+// launcher (z-index 500, bottom-right) completely — on a first visit the FAB,
+// its bubble and the bubble's ✕ were all untappable. Lifting by the banner's
+// measured height keeps every stacking order exactly as it was.
+const BANNER_H_VAR = "--mbp-banner-h";
+
 export default function CookieBanner() {
   const [visible, setVisible] = useState(false);
   const [showIcon, setShowIcon] = useState(false);
+  const barRef = useRef(null);
+
+  // Measured, not hardcoded: the banner wraps to two or three rows depending on
+  // viewport width, so its height is 100-220px in practice. A constant would be
+  // wrong on most screens.
+  useEffect(() => {
+    const root = document.documentElement;
+    const clear = () => root.style.setProperty(BANNER_H_VAR, "0px");
+    if (!visible) { clear(); return; }
+    const el = barRef.current;
+    if (!el) { clear(); return; }
+    const apply = () => root.style.setProperty(BANNER_H_VAR, `${Math.ceil(el.getBoundingClientRect().height)}px`);
+    apply();
+    const ro = typeof ResizeObserver !== "undefined" ? new ResizeObserver(apply) : null;
+    ro?.observe(el);
+    window.addEventListener("resize", apply);
+    return () => {
+      ro?.disconnect();
+      window.removeEventListener("resize", apply);
+      clear();
+    };
+  }, [visible]);
 
   useEffect(() => {
     const saved = localStorage.getItem(CONSENT_KEY);
@@ -64,7 +93,7 @@ export default function CookieBanner() {
     <>
       {/* Cookie banner */}
       {visible && (
-        <div style={{
+        <div ref={barRef} style={{
           position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 9999,
           background: "#fff", borderTop: "3px solid #00E5FF",
           boxShadow: "0 -4px 24px rgba(0,0,0,0.12)",
