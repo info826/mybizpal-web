@@ -82,8 +82,20 @@ for (const vp of VIEWPORTS) {
   rec(`${vp.label}: real Calendly iframe present`, appeared);
   if (!appeared) { await ctx.close(); continue; }
 
-  // Give Calendly time to load and post its page_height.
-  await page.waitForTimeout(6000);
+  // POLL, do not sleep. Calendly posts junk interim heights (26px, then 2px)
+  // before the real one, which landed ~6.8s in on desktop when measured. A
+  // fixed 6s wait caught an interim value and passed only because the CSS
+  // min-height floored it — a check that passes by luck is worse than none.
+  const settleDeadline = Date.now() + 30000;
+  let settled = 0;
+  while (Date.now() < settleDeadline) {
+    settled = await page.evaluate(() => {
+      const f = document.querySelector(".cs-cal-embed iframe");
+      return f ? Math.round(f.getBoundingClientRect().height) : 0;
+    });
+    if (settled >= 700) break;   // comfortably past both CSS floors (660/560)
+    await page.waitForTimeout(500);
+  }
 
   const m = await page.evaluate(() => {
     const host = document.querySelector('.cs-cal-embed');

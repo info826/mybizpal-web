@@ -979,6 +979,10 @@ const calendlyEventName = (e) => {
 // than a plain link.
 const INLINE_LOAD_TIMEOUT_MS = 6000;
 
+// Smallest page_height we will believe. Calendly reports 26px and 2px while
+// booting; a real calendar is many hundreds of px.
+const CALENDLY_MIN_SANE_HEIGHT = 200;
+
 function ContactSalesForm({ onClose, plan = "" }) {
   const [step, setStep] = useState(1);
   const [f, setF] = useState({
@@ -1127,9 +1131,15 @@ function ContactSalesForm({ onClose, plan = "" }) {
       // inject arbitrary CSS.
       if (name === "calendly.page_height") {
         const h = e.data && e.data.payload && e.data.payload.height;
-        if (typeof h === "string" && /^\d+(\.\d+)?px$/.test(h)) {
-          host.style.height = h;
-        }
+        if (typeof h !== "string" || !/^\d+(\.\d+)?px$/.test(h)) return;
+        // Calendly emits junk interim measurements while it boots — observed
+        // live: 26px, then 2px, then the real 903px about 6.8s in. Applying
+        // those verbatim collapses the embed mid-load, and a late stray one
+        // would shrink a working calendar back down. Anything below the
+        // floor is not a real calendar, so ignore it; the CSS min-height
+        // holds the space until the genuine value arrives.
+        if (parseFloat(h) < CALENDLY_MIN_SANE_HEIGHT) return;
+        host.style.height = h;
         return;
       }
 
