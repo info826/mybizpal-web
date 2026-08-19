@@ -222,7 +222,14 @@ for (const vp of VIEWPORTS) {
     const label = consent ?? 'unset';
     rec(`${vp.label}: consent=${label} shows the button version`, (await page.locator(BUTTON).count()) === 1);
     rec(`${vp.label}: consent=${label} never requests Calendly's script`, cdnHits.length === 0);
-    rec(`${vp.label}: consent=${label} shows no embed`, (await page.locator(`${EMBED}`).count()) === 0);
+    // The host element is now mounted permanently and parked off-screen — that
+    // is what makes the warm path possible. "No embed" therefore means no
+    // iframe was ever created and the host is still off-screen, not that the
+    // node is absent.
+    const frames = await page.locator(`${EMBED} iframe`).count();
+    const parked = await page.locator(".cs-cal-wrap.cs-cal-warm").count();
+    rec(`${vp.label}: consent=${label} shows no embed`, frames === 0 && parked === 1,
+      `iframes ${frames}, off-screen ${parked}`);
     await ctx.close();
   }
 }

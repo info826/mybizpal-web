@@ -372,14 +372,34 @@ h1,h2,h3{font-family:'Manrope',sans-serif;line-height:1.1;letter-spacing:-0.03em
    messages, honoured in the effect, so this is only the starting point. */
 .cs-cal-embed{height:660px;min-height:660px}
 .cs-cal-embed iframe{border-radius:14px;display:block;width:100%;height:100%;border:0}
-.cs-cal-skeleton{position:absolute;inset:0;padding:20px;display:flex;flex-direction:column;gap:12px;background:#0f0f1e;pointer-events:none}
-.cs-sk-line{height:12px;border-radius:6px;background:linear-gradient(90deg,rgba(255,255,255,0.05),rgba(255,255,255,0.11),rgba(255,255,255,0.05));background-size:200% 100%;animation:csSkShimmer 1.3s ease-in-out infinite}
-.cs-sk-line.cs-sk-title{height:18px;width:55%}
-.cs-sk-line.short{width:40%}
-.cs-sk-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:6px 0}
-.cs-sk-cell{height:56px;border-radius:10px;background:linear-gradient(90deg,rgba(255,255,255,0.05),rgba(255,255,255,0.11),rgba(255,255,255,0.05));background-size:200% 100%;animation:csSkShimmer 1.3s ease-in-out infinite}
+/* Warming: invisible but IN THE VIEWPORT, and this is not a style choice.
+   Chrome throttles rendering of cross-origin iframes that sit outside the
+   viewport, so parking it at left:-10000px meant Calendly never got far enough
+   to render a calendar or post a single message — measured: zero calendly.*
+   messages after 8s warming, versus a full render when visible. display:none
+   and visibility:hidden are worse still. So: full size, in view, opacity 0,
+   inert, painted under the modal it will later appear inside. */
+.cs-cal-warm{position:fixed;left:0;top:0;width:680px;height:660px;min-height:0;opacity:0;pointer-events:none}
+/* A CALENDAR-shaped placeholder: header block, day-of-week strip and a 7x5
+   month grid, so what the user waits in front of is the shape of the thing
+   arriving — not a generic bar. */
+.cs-cal-skeleton{position:absolute;inset:0;padding:22px;display:flex;flex-direction:column;gap:14px;background:#0f0f1e;pointer-events:none}
+.cs-sk-head{height:44px;width:62%;border-radius:10px}
+.cs-sk-month{display:grid;grid-template-columns:repeat(7,1fr);gap:8px}
+.cs-sk-dow{height:10px;border-radius:4px;opacity:.55}
+.cs-sk-day{aspect-ratio:1/1;border-radius:8px}
+.cs-sk-label{margin-top:auto;text-align:center;font-family:'Manrope',sans-serif;font-size:13px;color:#8A8A8F}
+.cs-sk-head,.cs-sk-dow,.cs-sk-day{background:linear-gradient(90deg,rgba(255,255,255,0.05),rgba(255,255,255,0.12),rgba(255,255,255,0.05));background-size:200% 100%;animation:csSkShimmer 1.3s ease-in-out infinite}
 @keyframes csSkShimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
-@media (prefers-reduced-motion:reduce){.cs-sk-line,.cs-sk-cell{animation:none}}
+/* Reduced motion: flat grey, no shimmer, no movement at all. */
+@media (prefers-reduced-motion:reduce){
+  .cs-sk-head,.cs-sk-dow,.cs-sk-day{animation:none;background:rgba(255,255,255,0.08)}
+}
+@media (max-width:640px){
+  .cs-sk-head{height:36px;width:70%}
+  .cs-cal-skeleton{padding:16px;gap:10px}
+}
+
 @media (max-width:640px){
   .cs-cal-wrap{min-height:560px}
   .cs-cal-embed{height:560px;min-height:560px}
@@ -401,7 +421,15 @@ h1,h2,h3{font-family:'Manrope',sans-serif;line-height:1.1;letter-spacing:-0.03em
    modal looks exactly as it always has; with the banner up the percentage wins
    and the box shrinks to fit above it, scrolling internally via overflow-y. */
 .modal-box{background:#0d0d1a;border:1px solid rgba(255,255,255,0.1);border-radius:24px;width:100%;max-width:520px;max-height:min(90vh,100%);overflow-y:auto;position:relative;transform:translateY(16px) scale(.98);transition:transform .25s;scrollbar-width:thin}
-.modal-overlay.open .modal-box{transform:translateY(0) scale(1)}
+/* transform:none, NOT translateY(0) scale(1). A transformed element becomes the
+   containing block for position:fixed descendants, which trapped the warming
+   embed inside .modal-box and let its overflow-y:auto clip it out of view when
+   the form was scrolled — Chrome then throttled the off-screen iframe and it
+   never rendered. Measured: mobile never warmed in 30s, desktop only warmed
+   because the box happened to be short enough. An identity transform still
+   creates the containing block; none does not. The entrance transition is
+   unaffected (it interpolates from translateY(16px) scale(.98) to none). */
+.modal-overlay.open .modal-box{transform:none}
 .modal-header{padding:28px 28px 0;display:flex;align-items:flex-start;justify-content:space-between;gap:16px}
 .modal-close{background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.1);color:#A1A1A6;width:32px;height:32px;border-radius:50%;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-family:'Manrope',sans-serif;transition:all .2s}
 .modal-close:hover{background:rgba(255,255,255,0.12);color:#F5F5F7}
@@ -992,7 +1020,7 @@ const CALENDLY_MIN_SANE_HEIGHT = 200;
 // treated as unavailable.
 const CALENDLY_UNAVAILABLE_TIMEOUT_MS = 8000;
 
-function ContactSalesForm({ onClose, plan = "" }) {
+function ContactSalesForm({ onClose, plan = "", open = false }) {
   const [step, setStep] = useState(1);
   const [f, setF] = useState({
     companyWebsite: "", businessEmail: "",
@@ -1080,32 +1108,47 @@ function ContactSalesForm({ onClose, plan = "" }) {
     } finally { setLoading(false); }
   };
 
-  // Decide the success step's booking surface the moment the lead is CONFIRMED
-  // written — not at page load. Consent is checked first so a visitor without
-  // marketing consent never has Calendly's script injected into this page at
-  // all; they get the button, which opens Calendly on Calendly's own domain.
+  // ── Warm the embed ────────────────────────────────────────────────────────
+  // Calendly takes 6-7s to settle, all of it their load. Starting that clock at
+  // submit means the user watches a skeleton. So it starts when the MODAL OPENS
+  // instead, off-screen, and by the time two form steps are done the calendar is
+  // already rendered — reveal is then a CSS change, not a load.
+  //
+  // Two hard constraints shape this:
+  //   1. Nothing at page load. The preload is keyed on the modal opening.
+  //   2. No preload without marketing consent — the script must not touch the
+  //      page for someone who has not agreed to it.
+  // And one browser rule: REPARENTING AN IFRAME RELOADS IT. The host element is
+  // therefore mounted once, permanently, and never moves in the DOM. Revealing
+  // it is a class change; moving it would throw the whole warm load away.
+  const [scriptReady, setScriptReady] = useState(false);
+  const [calReady, setCalReady] = useState(false);
+  const revealedRef = useRef(false);
+  const revealAtRef = useRef(0);
+  const lastGoodHeightRef = useRef(null);
+  const calReadyRef = useRef(false);
+  const coldTimerRef = useRef(null);
+  const unavailableTimerRef = useRef(null);
+  const warmAtRevealRef = useRef(false);
+
   useEffect(() => {
-    if (!done) return;
-    if (!hasMarketingConsent()) { setBookMode("button"); return; }
+    if (!open || done) return;
+    if (!hasMarketingConsent()) return;
     let cancelled = false;
     loadCalendly()
-      .then(() => { if (!cancelled) setBookMode("inline"); })
-      .catch(() => { if (!cancelled) setBookMode("button"); });   // blocked script → button
+      .then(() => { if (!cancelled) setScriptReady(true); })
+      .catch(() => { /* blocked — submit falls back to the button */ });
     return () => { cancelled = true; };
-  }, [done]);
+  }, [open, done]);
 
-  // Mount the embed, and guarantee it either shows something or gets out of the
-  // way. Three things can mark it ready: any calendly.* postMessage, the
-  // iframe's own load event, or nothing — in which case the timeout flips to
-  // the button. There is no path that leaves a blank modal or a permanent
-  // skeleton.
-  useEffect(() => {
-    if (bookMode !== "inline") return;
+  function initInline() {
     const host = inlineRef.current;
-    if (!host || !window.Calendly) { setBookMode("button"); return; }
-
+    if (!host || !window.Calendly) return false;
     const email = f.businessEmail.trim();
-    const name = `${f.firstName} ${f.lastName}`.trim();
+    const name = [f.firstName.trim(), f.lastName.trim()].filter(Boolean).join(" ");
+    // A re-init is a new iframe, so everything learned about the old one is stale.
+    viewedRef.current = false;
+    lastGoodHeightRef.current = null;
     host.innerHTML = "";
     try {
       window.Calendly.initInlineWidget({
@@ -1115,30 +1158,119 @@ function ContactSalesForm({ onClose, plan = "" }) {
         utm: { utmContent: email },
       });
     } catch {
-      setBookMode("button");
-      return;
+      return false;
     }
-    trackEvent("contact_sales_book_call", { method: "inline", plan: plan || "elite" });
+    return true;
+  }
 
-    const markReady = () => {
-      if (inlineReadyRef.current) return;
-      inlineReadyRef.current = true;
-      setInlineReady(true);
-      clearTimeout(timer);
+  // Re-initialise as the prefill fills in, debounced, and ONLY while off-screen.
+  // Each re-init is a fresh iframe, effectively free after the first because
+  // everything is cached, and it keeps the warm widget carrying the latest name
+  // and email. After reveal we never re-init — that would destroy the calendar
+  // the user is looking at.
+  const prefillKey = [f.firstName.trim(), f.lastName.trim(), f.businessEmail.trim()].join("|");
+  useEffect(() => {
+    if (!scriptReady || done || !open) return;
+    const t = setTimeout(() => { initInline(); }, 600);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [scriptReady, prefillKey, open, done]);
+
+  function markCalendarReady() {
+    if (!revealedRef.current || calReadyRef.current) return;
+    calReadyRef.current = true;
+    setCalReady(true);
+    setInlineReady(true);
+    inlineReadyRef.current = true;
+    clearTimeout(coldTimerRef.current);
+    // The number this whole preload exists to move: success-step render → a real
+    // calendar height.
+    trackEvent("contact_sales_calendar_ready", {
+      ms: Math.round(performance.now() - revealAtRef.current),
+      warm: warmAtRevealRef.current,
+      plan: plan || "elite",
+    });
+  }
+
+  // Decide the booking surface the moment the lead is CONFIRMED written. On the
+  // warm path the widget already exists, so this is instant.
+  useEffect(() => {
+    if (!done) return;
+    if (!hasMarketingConsent()) { setBookMode("button"); return; }
+    let cancelled = false;
+    loadCalendly()
+      .then(() => {
+        if (cancelled) return;
+        const alreadyWarm = !!(inlineRef.current && inlineRef.current.querySelector("iframe"));
+        if (!alreadyWarm && !initInline()) { setBookMode("button"); return; }
+        setBookMode("inline");
+      })
+      .catch(() => { if (!cancelled) setBookMode("button"); });
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [done]);
+
+  // One listener for the form's whole lifetime, warm phase included — on the
+  // warm path every useful message arrives long before reveal.
+  useEffect(() => {
+    const onMessage = (e) => {
+      const name = calendlyEventName(e);
+      if (!name) return;
+
+      if (name === "calendly.page_height") {
+        const h = e.data && e.data.payload && e.data.payload.height;
+        if (typeof h !== "string" || !/^\d+(\.\d+)?px$/.test(h)) return;
+        // Calendly emits junk interim measurements while it boots — observed
+        // live: 26px, then 2px, then the real 903px. Applying those collapses
+        // the embed, and a late stray one would shrink a working calendar.
+        if (parseFloat(h) < CALENDLY_MIN_SANE_HEIGHT) return;
+        lastGoodHeightRef.current = h;
+        if (inlineRef.current) inlineRef.current.style.height = h;
+        markCalendarReady();
+        return;
+      }
+
+      // The signal that a REAL calendar rendered. Its absence is how the
+      // "currently unavailable" screen is detected.
+      if (name === "calendly.event_type_viewed") {
+        viewedRef.current = true;
+        clearTimeout(unavailableTimerRef.current);
+      }
+
+      if (name === "calendly.event_scheduled") {
+        trackEvent("contact_sales_call_booked", { method: "inline", plan: plan || "elite" });
+      }
     };
-    const timer = setTimeout(() => {
-      if (!inlineReadyRef.current) setBookMode("button");
-    }, INLINE_LOAD_TIMEOUT_MS);
+    window.addEventListener("message", onMessage);
+    return () => window.removeEventListener("message", onMessage);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [plan]);
 
-    // Armed once the iframe has actually loaded. A loaded iframe that never
-    // announces an event type is the "currently unavailable" screen.
-    let unavailableTimer = null;
-    const armUnavailableWatch = () => {
-      if (unavailableTimer || viewedRef.current) return;
-      unavailableTimer = setTimeout(() => {
+  // Reveal. Everything that used to happen on mount happens here instead,
+  // because on the warm path the iframe loaded minutes ago.
+  useEffect(() => {
+    if (!done || bookMode !== "inline") return;
+    revealedRef.current = true;
+    revealAtRef.current = performance.now();
+    warmAtRevealRef.current = !!lastGoodHeightRef.current || viewedRef.current;
+
+    if (lastGoodHeightRef.current) {
+      // Warm: a real height already arrived off-screen, so this is ready now.
+      if (inlineRef.current) inlineRef.current.style.height = lastGoodHeightRef.current;
+      markCalendarReady();
+    } else {
+      // Cold: the original no-show timeout still applies.
+      coldTimerRef.current = setTimeout(() => {
+        if (!calReadyRef.current) setBookMode("button");
+      }, INLINE_LOAD_TIMEOUT_MS);
+    }
+
+    // The unavailable watch starts FROM REVEAL, not from iframe load — on the
+    // warm path the iframe loaded long ago. If the event type already arrived
+    // off-screen the calendar is known good and this timer never runs.
+    if (!viewedRef.current) {
+      unavailableTimerRef.current = setTimeout(() => {
         if (viewedRef.current) return;
-        // Logged every time, with a timestamp, so the frequency of this can
-        // actually be counted rather than guessed at.
         trackEvent("contact_sales_calendar_unavailable", {
           plan: plan || "elite",
           at: new Date().toISOString(),
@@ -1147,86 +1279,17 @@ function ContactSalesForm({ onClose, plan = "" }) {
         setCalendarUnavailable(true);
         setBookMode("button");
       }, CALENDLY_UNAVAILABLE_TIMEOUT_MS);
-    };
-
-    const onMessage = (e) => {
-      const name = calendlyEventName(e);
-      if (!name) return;
-      markReady();
-
-      // Calendly measures its own content and tells us how tall to be. This is
-      // the ONLY thing that keeps the calendar from sitting below the fold
-      // inside the iframe's own scrollbar: the CSS height above is just the
-      // opening bid. Validated before it touches style, so a message cannot
-      // inject arbitrary CSS.
-      if (name === "calendly.page_height") {
-        const h = e.data && e.data.payload && e.data.payload.height;
-        if (typeof h !== "string" || !/^\d+(\.\d+)?px$/.test(h)) return;
-        // Calendly emits junk interim measurements while it boots — observed
-        // live: 26px, then 2px, then the real 903px about 6.8s in. Applying
-        // those verbatim collapses the embed mid-load, and a late stray one
-        // would shrink a working calendar back down. Anything below the
-        // floor is not a real calendar, so ignore it; the CSS min-height
-        // holds the space until the genuine value arrives.
-        if (parseFloat(h) < CALENDLY_MIN_SANE_HEIGHT) return;
-        host.style.height = h;
-        return;
-      }
-
-      // The signal that a REAL calendar rendered. Its absence is how we detect
-      // the "currently unavailable" screen, which is otherwise indistinguishable
-      // from a healthy embed from out here.
-      if (name === "calendly.event_type_viewed") {
-        viewedRef.current = true;
-        clearTimeout(unavailableTimer);
-      }
-
-      // The whole point of the calendar-first step: a booking actually made.
-      if (name === "calendly.event_scheduled") {
-        trackEvent("contact_sales_call_booked", { method: "inline", plan: plan || "elite" });
-      }
-    };
-    window.addEventListener("message", onMessage);
-
-    // Second ready signal: the iframe's own load. Calendly injects it
-    // asynchronously, so watch for it with a MutationObserver rather than a
-    // poll — a poll can arrive AFTER a fast iframe has already loaded, miss the
-    // event entirely, and leave the skeleton up until the 6s timeout tears down
-    // an embed that was working perfectly. (Caught by the harness doing exactly
-    // that with a data: URL iframe.)
-    const attachFrame = (frame) => {
-      if (!frame) return false;
-      frame.addEventListener("load", () => { markReady(); armUnavailableWatch(); }, { once: true });
-      try {
-        // Same-origin and already finished — the load event will never come.
-        if (frame.contentDocument && frame.contentDocument.readyState === "complete") markReady();
-      } catch {
-        // Cross-origin, which the real Calendly iframe is: we cannot inspect
-        // it, and do not need to — its postMessage is the primary signal.
-      }
-      return true;
-    };
-
-    let observer = null;
-    if (!attachFrame(host.querySelector("iframe"))) {
-      observer = new MutationObserver(() => {
-        const frame = host.querySelector("iframe");
-        if (!frame) return;
-        observer.disconnect();
-        observer = null;
-        attachFrame(frame);
-      });
-      observer.observe(host, { childList: true, subtree: true });
     }
 
+    trackEvent("contact_sales_book_call", { method: "inline", plan: plan || "elite" });
+
     return () => {
-      clearTimeout(timer);
-      clearTimeout(unavailableTimer);
-      observer?.disconnect();
-      window.removeEventListener("message", onMessage);
+      clearTimeout(coldTimerRef.current);
+      clearTimeout(unavailableTimerRef.current);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [bookMode]);
+  }, [done, bookMode]);
+
 
   // Success step only. Nothing above this is touched: steps 1-2, validation and
   // the lead submission are exactly as they were, and the thank-you still only
@@ -1266,71 +1329,7 @@ function ContactSalesForm({ onClose, plan = "" }) {
     }
   };
 
-  if (done) return (
-    <div className="success-state cs-success">
-      <div className="cs-success-head">
-        <span className="cs-tick" aria-hidden="true">✅</span>
-        <h3 className="cs-success-title">
-          Enquiry received. Grab a time now, or close and we&rsquo;ll call you.
-        </h3>
-      </div>
-
-      {bookMode === "inline" || bookMode === "pending" ? (
-        <div className="cs-cal-wrap">
-          {/* The embed's own host element. Calendly owns everything inside it.
-              Rendered while 'pending' too so the ref exists the moment the
-              script resolves and the skeleton covers the script load as well as
-              the iframe load. */}
-          <div ref={inlineRef} className="cs-cal-embed" />
-          {(!inlineReady || bookMode === "pending") && (
-            <div className="cs-cal-skeleton" aria-hidden="true">
-              <div className="cs-sk-line cs-sk-title" />
-              <div className="cs-sk-grid">
-                {Array.from({ length: 8 }).map((_, i) => <div key={i} className="cs-sk-cell" />)}
-              </div>
-              <div className="cs-sk-line" />
-              <div className="cs-sk-line short" />
-            </div>
-          )}
-        </div>
-      ) : (
-        <>
-          {calendarUnavailable ? (
-            /* The embed loaded but was Calendly's "currently unavailable"
-               screen. Say so plainly rather than pretending the booking route
-               is normal. */
-            <p className="cs-success-sub cs-success-sub-warn">
-              Our calendar is busy right now &mdash; tap to book in a new tab, or close and we&rsquo;ll call you
-            </p>
-          ) : (
-            <p className="cs-success-sub">
-              We&rsquo;ve received your Elite enquiry and will reach out to {f.businessEmail} soon.
-            </p>
-          )}
-          {/* Every fallback lands here: no marketing consent, a blocked script,
-              or an embed that did not show anything within 6s. */}
-          <div className="cs-book-actions">
-            <button
-              type="button"
-              className="btn-primary cs-book-btn"
-              onClick={bookCall}
-              disabled={booking || bookMode === "pending"}
-            >
-              {booking ? "Opening…" : "Book a 30-min call"}
-            </button>
-          </div>
-        </>
-      )}
-
-      {onClose && (
-        <button type="button" className="cs-book-secondary cs-book-secondary-below" onClick={onClose}>
-          Close, I&rsquo;ll wait for your call.
-        </button>
-      )}
-    </div>
-  );
-
-  return (
+  const formView = (
     <div>
       <div className="sales-progress">
         <div className={"sales-dot" + (step === 1 ? " active" : " done")} />
@@ -1438,7 +1437,87 @@ function ContactSalesForm({ onClose, plan = "" }) {
       )}
     </div>
   );
+
+  // The success view WITHOUT the embed: the embed host lives outside this
+  // subtree so that switching from form to success never unmounts it. React
+  // keeps an element at the same position across renders, and an iframe that
+  // gets reparented reloads — which would discard the entire warm load.
+  const embedVisible = done && (bookMode === "inline" || bookMode === "pending");
+
+  const successView = (
+    <div className="success-state cs-success">
+      <div className="cs-success-head">
+        <span className="cs-tick" aria-hidden="true">✅</span>
+        <h3 className="cs-success-title">
+          Enquiry received. Grab a time now, or close and we&rsquo;ll call you.
+        </h3>
+      </div>
+
+      {!embedVisible && (
+        <>
+          {calendarUnavailable ? (
+            /* The embed loaded but was Calendly's "currently unavailable"
+               screen. Say so plainly rather than pretending the booking route
+               is normal. */
+            <p className="cs-success-sub cs-success-sub-warn">
+              Our calendar is busy right now &mdash; tap to book in a new tab, or close and we&rsquo;ll call you
+            </p>
+          ) : (
+            <p className="cs-success-sub">
+              We&rsquo;ve received your Elite enquiry and will reach out to {f.businessEmail} soon.
+            </p>
+          )}
+          {/* Every fallback lands here: no marketing consent, a blocked script,
+              an embed that showed nothing within 6s, or a calendar that loaded
+              but never announced an event type. */}
+          <div className="cs-book-actions">
+            <button
+              type="button"
+              className="btn-primary cs-book-btn"
+              onClick={bookCall}
+              disabled={booking}
+            >
+              {booking ? "Opening…" : "Book a 30-min call"}
+            </button>
+          </div>
+        </>
+      )}
+    </div>
+  );
+
+  // A calendar-shaped skeleton, not a generic bar: a header block and a 7×5
+  // month grid, so the shape the user is waiting for is the shape they see.
+  const calendarSkeleton = (
+    <div className="cs-cal-skeleton" aria-hidden="true">
+      <div className="cs-sk-head" />
+      <div className="cs-sk-month">
+        {Array.from({ length: 7 }).map((_, i) => <div key={`d${i}`} className="cs-sk-dow" />)}
+        {Array.from({ length: 35 }).map((_, i) => <div key={`c${i}`} className="cs-sk-day" />)}
+      </div>
+      <p className="cs-sk-label">Loading your calendar…</p>
+    </div>
+  );
+
+  return (
+    <div className="cs-root">
+      {done ? successView : formView}
+
+      {/* MOUNTED ONCE, NEVER MOVED. Off-screen while warming, in flow once
+          revealed — a class change, not a reparent. */}
+      <div className={"cs-cal-wrap" + (embedVisible ? "" : " cs-cal-warm")}>
+        <div ref={inlineRef} className="cs-cal-embed" />
+        {embedVisible && !calReady && calendarSkeleton}
+      </div>
+
+      {done && onClose && (
+        <button type="button" className="cs-book-secondary cs-book-secondary-below" onClick={onClose}>
+          Close, I&rsquo;ll wait for your call.
+        </button>
+      )}
+    </div>
+  );
 }
+
 
 // ── Revenue Calculator ─────────────────────────────────────────────────────
 function RevenueCalculator({ onOpenModal }) {
@@ -2587,7 +2666,7 @@ export default function App() {
             <button className="modal-close" onClick={closeSales}>✕</button>
           </div>
           <div className="modal-body">
-            <ContactSalesForm onClose={closeSales} plan={salesPlan} />
+            <ContactSalesForm onClose={closeSales} plan={salesPlan} open={salesOpen} />
           </div>
         </div>
       </div>
