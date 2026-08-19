@@ -361,9 +361,16 @@ h1,h2,h3{font-family:'Manrope',sans-serif;line-height:1.1;letter-spacing:-0.03em
    progressive, so where it is unsupported the modal stays 520px and still
    works. */
 .modal-box:has(.cs-cal-wrap){max-width:680px}
-.cs-cal-wrap{position:relative;min-height:640px;border-radius:14px;overflow:hidden;background:#0f0f1e}
-.cs-cal-embed{min-height:640px}
-.cs-cal-embed iframe{border-radius:14px}
+.cs-cal-wrap{position:relative;min-height:660px;border-radius:14px;overflow:hidden;background:#0f0f1e}
+/* EXPLICIT height, not merely min-height. Calendly's iframe is height:100%,
+   and a percentage height resolved against an auto-height parent collapses to
+   the iframe's intrinsic ~150px — which is exactly what shipped: real widget,
+   header and ribbon visible, the calendar below the fold inside its own
+   scrollbar. min-height does NOT give the parent a definite height for that
+   resolution. Calendly drives the height from here on via calendly.page_height
+   messages, honoured in the effect, so this is only the starting point. */
+.cs-cal-embed{height:660px;min-height:660px}
+.cs-cal-embed iframe{border-radius:14px;display:block;width:100%;height:100%;border:0}
 .cs-cal-skeleton{position:absolute;inset:0;padding:20px;display:flex;flex-direction:column;gap:12px;background:#0f0f1e;pointer-events:none}
 .cs-sk-line{height:12px;border-radius:6px;background:linear-gradient(90deg,rgba(255,255,255,0.05),rgba(255,255,255,0.11),rgba(255,255,255,0.05));background-size:200% 100%;animation:csSkShimmer 1.3s ease-in-out infinite}
 .cs-sk-line.cs-sk-title{height:18px;width:55%}
@@ -373,7 +380,8 @@ h1,h2,h3{font-family:'Manrope',sans-serif;line-height:1.1;letter-spacing:-0.03em
 @keyframes csSkShimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
 @media (prefers-reduced-motion:reduce){.cs-sk-line,.cs-sk-cell{animation:none}}
 @media (max-width:640px){
-  .cs-cal-wrap,.cs-cal-embed{min-height:560px}
+  .cs-cal-wrap{min-height:560px}
+  .cs-cal-embed{height:560px;min-height:560px}
   .cs-success-title{font-size:16px}
 }
 
@@ -1111,6 +1119,20 @@ function ContactSalesForm({ onClose, plan = "" }) {
       const name = calendlyEventName(e);
       if (!name) return;
       markReady();
+
+      // Calendly measures its own content and tells us how tall to be. This is
+      // the ONLY thing that keeps the calendar from sitting below the fold
+      // inside the iframe's own scrollbar: the CSS height above is just the
+      // opening bid. Validated before it touches style, so a message cannot
+      // inject arbitrary CSS.
+      if (name === "calendly.page_height") {
+        const h = e.data && e.data.payload && e.data.payload.height;
+        if (typeof h === "string" && /^\d+(\.\d+)?px$/.test(h)) {
+          host.style.height = h;
+        }
+        return;
+      }
+
       // The whole point of the calendar-first step: a booking actually made.
       if (name === "calendly.event_scheduled") {
         trackEvent("contact_sales_call_booked", { method: "inline", plan: plan || "elite" });

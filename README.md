@@ -110,6 +110,23 @@ Calendly's CDN is intercepted too — that is what makes "blocked script" and
 stand-in widget, not Calendly's real embed. That the real calendar renders and
 takes a booking still needs a human to look once.
 
+## Calendly real-embed smoke check
+
+`npm run check:calendly-live -- https://mybizpal.ai/` reaches the success step
+and loads **the real Calendly widget over the network** — nothing is stubbed
+except the lead POST, which must never write a real sales lead. It asserts the
+iframe is actually tall (>= 500px), that the container matches it so there is
+no empty space beneath, and that the button fallback did not take over.
+
+It exists because the stubbed checks could not catch the thing that shipped:
+the real widget renders `height:100%`, and against an auto-height parent that
+collapsed to ~150px — the calendar sat below the fold inside the iframe’s own
+scrollbar while our container held 640px of empty dark space. A stub iframe
+sizes itself and hides that entirely.
+
+Treat it as a **smoke check, not a gate**: it depends on a third party being
+up, so a failure means "go and look", not necessarily "the code is wrong".
+
 ### Requirements and limits
 
 - Needs Chrome or Edge **already installed**. `playwright-core` drives the
