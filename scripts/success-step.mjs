@@ -45,22 +45,33 @@ const rec = (n, p, d) => { results.push({ n, p }); console.log(`  ${p ? 'PASS' :
 
 const browser = await chromium.launch({ executablePath: CHROME, headless: true });
 
-// A stand-in for Calendly's widget: renders an iframe into parentElement, or —
-// when `stall` is set — renders nothing at all, which is the case the 6s
-// timeout exists for.
-const calendlyStub = (stall) => `
+// A stand-in for Calendly's widget.js. It points the iframe at the REAL
+// calendly.com URL, which is itself intercepted below — that matters because
+// our code only trusts postMessages whose origin is https://calendly.com, so a
+// stub that posts from the page origin could never exercise the message paths
+// at all. 'stall' renders no iframe, which is what the 6s timeout is for.
+const widgetStub = (mode) => `
   window.Calendly = {
     initInlineWidget: function (o) {
       window.__inline = { url: o.url, prefill: o.prefill, utm: o.utm };
-      ${stall ? '' : `
+      ${mode === 'stall' ? '' : `
       var f = document.createElement('iframe');
-      f.src = 'data:text/html,<html><body style="background:%23101024"></body></html>';
-      f.style.width = '100%'; f.style.height = '640px'; f.style.border = '0';
+      f.src = o.url + (o.url.indexOf('?') > -1 ? '&' : '?') + 'embed_domain=test';
+      f.style.width = '100%'; f.style.border = '0';
       o.parentElement.appendChild(f);`}
     },
     initPopupWidget: function (o) { window.__popup = o; }
   };`;
 
+// The document served inside the iframe. 'healthy' announces an event type,
+// which is the signal a real calendar rendered. 'unavailable' deliberately
+// does NOT — that is exactly Calendly's "this calendar is currently
+// unavailable" screen: a perfectly loaded iframe that is an error.
+const iframeDoc = (mode) => `<!doctype html><html><body style="margin:0;background:#101024">
+<script>
+  parent.postMessage({ event: 'calendly.page_height', payload: { height: '900px' } }, '*');
+  ${mode === 'unavailable' ? '' : "parent.postMessage({ event: 'calendly.event_type_viewed' }, '*');"}
+</script></body></html>`;
 /**
  * Drive the form to the success step.
  * consent: 'all' | 'essential' | null   calendly: 'ok' | 'stall' | 'blocked'
@@ -80,8 +91,12 @@ async function reachSuccess({ viewport, isMobile, hasTouch }, consent, calendly)
     cdnHits.push(r.request().url());
     if (calendly === 'blocked') return r.abort('blockedbyclient');
     if (r.request().url().endsWith('.css')) return r.fulfill({ status: 200, contentType: 'text/css', body: '' });
-    return r.fulfill({ status: 200, contentType: 'application/javascript', body: calendlyStub(calendly === 'stall') });
+    return r.fulfill({ status: 200, contentType: 'application/javascript', body: widgetStub(calendly) });
   });
+  // The iframe document itself, served from calendly.com so its postMessages
+  // carry the origin our handler requires.
+  await page.route('https://calendly.com/**', (r) =>
+    r.fulfill({ status: 200, contentType: 'text/html', body: iframeDoc(calendly) }));
 
   await page.goto(URL_UNDER_TEST, { waitUntil: 'domcontentloaded', timeout: 60000 });
   await page.getByRole('button', { name: /contact sales/i }).first().click();
@@ -167,6 +182,28 @@ for (const vp of VIEWPORTS) {
     rec(`${vp.label}: stalled embed falls back to the button within the timeout`,
       (await page.locator(BUTTON).count()) === 1);
     rec(`${vp.label}: no permanent skeleton left behind`, (await page.locator(SKELETON).count()) === 0);
+    await ctx.close();
+  }
+
+  // ── 2b. Loaded iframe that is really the "currently unavailable" screen ───
+  // No calendly.event_type_viewed ever arrives. Everything else looks healthy:
+  // the script loaded, the iframe loaded, page_height even came through. This
+  // is the case every earlier fallback was blind to.
+  {
+    const { ctx, page } = await reachSuccess(vp, 'all', 'unavailable');
+    await page.waitForTimeout(1500);
+    rec(`${vp.label}: unavailable embed is shown at first (looks healthy)`,
+      (await page.locator(`${EMBED} iframe`).count()) === 1);
+    await page.waitForSelector(BUTTON, { timeout: 15000 }).catch(() => {});
+    rec(`${vp.label}: no event_type_viewed within 8s falls back to the button`,
+      (await page.locator(BUTTON).count()) === 1);
+    rec(`${vp.label}: tells the user the calendar is busy`,
+      (await page.locator('.cs-success-sub-warn').count()) === 1,
+      (await page.locator('.cs-success-sub-warn').innerText().catch(() => '')).slice(0, 48));
+    const un = await dl(page, 'contact_sales_calendar_unavailable');
+    rec(`${vp.label}: unavailable logged once with a timestamp`,
+      un.length === 1 && typeof un[0].at === 'string' && !Number.isNaN(Date.parse(un[0].at)),
+      JSON.stringify(un));
     await ctx.close();
   }
 

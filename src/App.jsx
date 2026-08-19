@@ -354,6 +354,7 @@ h1,h2,h3{font-family:'Manrope',sans-serif;line-height:1.1;letter-spacing:-0.03em
 .cs-tick{font-size:20px;line-height:1.3;flex-shrink:0}
 .cs-success-title{font-family:'Manrope',sans-serif;font-size:17px;font-weight:700;color:#F5F5F7;line-height:1.35;margin:0}
 .cs-success-sub{font-size:15px;color:#A1A1A6;margin:0 0 20px;text-align:center}
+.cs-success-sub-warn{color:#F5C451}
 .cs-book-secondary-below{display:block;margin:16px auto 0}
 /* The modal grows to fit the embed and, past its max-height, scrolls
    internally — the overlay's --mbp-banner-h inset keeps all of it clear of the
@@ -983,6 +984,14 @@ const INLINE_LOAD_TIMEOUT_MS = 6000;
 // booting; a real calendar is many hundreds of px.
 const CALENDLY_MIN_SANE_HEIGHT = 200;
 
+// Calendly sometimes serves "This calendar is currently unavailable" INSIDE a
+// perfectly loaded iframe. Every existing fallback is blind to it: the script
+// loaded, the iframe loaded, page_height even arrives — it just is not a
+// calendar. The tell is that calendly.event_type_viewed never fires, so a
+// loaded embed that has not announced an event type within this window is
+// treated as unavailable.
+const CALENDLY_UNAVAILABLE_TIMEOUT_MS = 8000;
+
 function ContactSalesForm({ onClose, plan = "" }) {
   const [step, setStep] = useState(1);
   const [f, setF] = useState({
@@ -1006,6 +1015,8 @@ function ContactSalesForm({ onClose, plan = "" }) {
   // going to get. Consent is re-checked in the effect below anyway.
   const [bookMode, setBookMode] = useState(() => (hasMarketingConsent() ? "pending" : "button"));
   const [inlineReady, setInlineReady] = useState(false);
+  const [calendarUnavailable, setCalendarUnavailable] = useState(false);
+  const viewedRef = useRef(false);
   const inlineRef = useRef(null);
   const inlineReadyRef = useRef(false);
 
@@ -1119,6 +1130,25 @@ function ContactSalesForm({ onClose, plan = "" }) {
       if (!inlineReadyRef.current) setBookMode("button");
     }, INLINE_LOAD_TIMEOUT_MS);
 
+    // Armed once the iframe has actually loaded. A loaded iframe that never
+    // announces an event type is the "currently unavailable" screen.
+    let unavailableTimer = null;
+    const armUnavailableWatch = () => {
+      if (unavailableTimer || viewedRef.current) return;
+      unavailableTimer = setTimeout(() => {
+        if (viewedRef.current) return;
+        // Logged every time, with a timestamp, so the frequency of this can
+        // actually be counted rather than guessed at.
+        trackEvent("contact_sales_calendar_unavailable", {
+          plan: plan || "elite",
+          at: new Date().toISOString(),
+          waited_ms: CALENDLY_UNAVAILABLE_TIMEOUT_MS,
+        });
+        setCalendarUnavailable(true);
+        setBookMode("button");
+      }, CALENDLY_UNAVAILABLE_TIMEOUT_MS);
+    };
+
     const onMessage = (e) => {
       const name = calendlyEventName(e);
       if (!name) return;
@@ -1143,6 +1173,14 @@ function ContactSalesForm({ onClose, plan = "" }) {
         return;
       }
 
+      // The signal that a REAL calendar rendered. Its absence is how we detect
+      // the "currently unavailable" screen, which is otherwise indistinguishable
+      // from a healthy embed from out here.
+      if (name === "calendly.event_type_viewed") {
+        viewedRef.current = true;
+        clearTimeout(unavailableTimer);
+      }
+
       // The whole point of the calendar-first step: a booking actually made.
       if (name === "calendly.event_scheduled") {
         trackEvent("contact_sales_call_booked", { method: "inline", plan: plan || "elite" });
@@ -1158,7 +1196,7 @@ function ContactSalesForm({ onClose, plan = "" }) {
     // that with a data: URL iframe.)
     const attachFrame = (frame) => {
       if (!frame) return false;
-      frame.addEventListener("load", markReady, { once: true });
+      frame.addEventListener("load", () => { markReady(); armUnavailableWatch(); }, { once: true });
       try {
         // Same-origin and already finished — the load event will never come.
         if (frame.contentDocument && frame.contentDocument.readyState === "complete") markReady();
@@ -1183,6 +1221,7 @@ function ContactSalesForm({ onClose, plan = "" }) {
 
     return () => {
       clearTimeout(timer);
+      clearTimeout(unavailableTimer);
       observer?.disconnect();
       window.removeEventListener("message", onMessage);
     };
@@ -1256,9 +1295,18 @@ function ContactSalesForm({ onClose, plan = "" }) {
         </div>
       ) : (
         <>
-          <p className="cs-success-sub">
-            We&rsquo;ve received your Elite enquiry and will reach out to {f.businessEmail} soon.
-          </p>
+          {calendarUnavailable ? (
+            /* The embed loaded but was Calendly's "currently unavailable"
+               screen. Say so plainly rather than pretending the booking route
+               is normal. */
+            <p className="cs-success-sub cs-success-sub-warn">
+              Our calendar is busy right now &mdash; tap to book in a new tab, or close and we&rsquo;ll call you
+            </p>
+          ) : (
+            <p className="cs-success-sub">
+              We&rsquo;ve received your Elite enquiry and will reach out to {f.businessEmail} soon.
+            </p>
+          )}
           {/* Every fallback lands here: no marketing consent, a blocked script,
               or an embed that did not show anything within 6s. */}
           <div className="cs-book-actions">

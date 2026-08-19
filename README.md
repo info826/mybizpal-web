@@ -124,6 +124,12 @@ collapsed to ~150px — the calendar sat below the fold inside the iframe’s ow
 scrollbar while our container held 640px of empty dark space. A stub iframe
 sizes itself and hides that entirely.
 
+**Run this MANUALLY, roughly weekly — not on every deploy.** It drives Calendly’s
+real booking page, and hitting a third party on every push is both rude and a
+source of false alarms. The three pre-deploy gates all run against the stub and
+stay that way; this one is for confirming the real embed still behaves after an
+embed change, and for spot-checking availability.
+
 Treat it as a **smoke check, not a gate**: it depends on a third party being
 up, so a failure means "go and look", not necessarily "the code is wrong".
 
