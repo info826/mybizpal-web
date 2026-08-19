@@ -82,9 +82,13 @@ for (const { label, viewport, isMobile, hasTouch } of VIEWPORTS) {
     route.fulfill({ status: 200, contentType: 'application/json', body: '{"success":true}' }));
   await page.goto(URL_UNDER_TEST, { waitUntil: 'domcontentloaded', timeout: 60000 });
 
-  // Banner appears at 800ms; wait past it so the modal opens into the worst case.
-  await page.waitForTimeout(1600);
-  const bannerUp = await page.evaluate(() => !!document.querySelector('div[style*="9999"]'));
+  // WAIT FOR the banner rather than sleeping past its 800ms entrance. A fixed
+  // wait races it under load and fails the precondition intermittently, which
+  // silently turns the whole run into a weaker test than it looks.
+  const bannerUp = await page
+    .waitForFunction(() => !!document.querySelector('div[style*="9999"]'), null, { timeout: 10000 })
+    .then(() => true)
+    .catch(() => false);
   rec(`${label}: cookie banner is showing (precondition)`, bannerUp);
 
   await page.getByRole('button', { name: /contact sales/i }).first().click();

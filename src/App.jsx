@@ -1123,6 +1123,7 @@ function ContactSalesForm({ onClose, plan = "", open = false }) {
   // it is a class change; moving it would throw the whole warm load away.
   const [scriptReady, setScriptReady] = useState(false);
   const [calReady, setCalReady] = useState(false);
+  const [booked, setBooked] = useState(false);
   const revealedRef = useRef(false);
   const revealAtRef = useRef(0);
   const lastGoodHeightRef = useRef(null);
@@ -1210,6 +1211,58 @@ function ContactSalesForm({ onClose, plan = "", open = false }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [done]);
 
+  // ── Booked ────────────────────────────────────────────────────────────────
+  // Calendly told us a meeting was scheduled. Two jobs: change what the user
+  // reads, and tell our own API so the lead stops being chased.
+  //
+  // The POST is BEST-EFFORT and deliberately so. Calendly's webhook (Standard
+  // plan) will be the authoritative signal; this is the fast one, and it fires
+  // from a browser we do not control, so it can be blocked, backgrounded or
+  // lost. Nothing user-facing depends on it: the copy changes either way, and a
+  // failure is swallowed rather than shown, because the booking itself already
+  // succeeded and there is nothing the user could usefully do about our
+  // bookkeeping.
+  const bookedPostedRef = useRef(null);
+
+  // The message listener is mounted once (deps [plan]), so it closes over the
+  // FIRST render's form state — where businessEmail is still empty. Reading
+  // through a ref that every render refreshes is what makes the POST carry the
+  // address the user actually typed. Caught by the harness asserting the body:
+  // without this the API receives business_email:"" and can match no lead at all.
+  const fRef = useRef(f);
+  fRef.current = f;
+
+  function markBooked(eventUri) {
+    setBooked(true);
+
+    // One POST per booking. Calendly can repeat event_scheduled (React
+    // remounts, duplicate frames), and the API dedupes on event_uri anyway —
+    // but not sending it twice is cheaper than relying on that.
+    const key = eventUri || "no-uri";
+    if (bookedPostedRef.current === key) return;
+    bookedPostedRef.current = key;
+
+    const body = JSON.stringify({
+      business_email: (fRef.current.businessEmail || "").trim(),
+      booked: true,
+      event_uri: eventUri,
+    });
+
+    // keepalive: the user may close the modal or the tab immediately after
+    // booking, and a normal fetch would be cancelled with it.
+    try {
+      fetch(`${API_URL}/api/sales-lead/booked`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body,
+        keepalive: true,
+      }).catch(() => { /* best-effort: the webhook is the authority */ });
+    } catch {
+      /* best-effort */
+    }
+  }
+
+
   // One listener for the form's whole lifetime, warm phase included — on the
   // warm path every useful message arrives long before reveal.
   useEffect(() => {
@@ -1238,8 +1291,16 @@ function ContactSalesForm({ onClose, plan = "", open = false }) {
       }
 
       if (name === "calendly.event_scheduled") {
+        // Calendly puts the canonical event URI in the payload. It is the join
+        // key the API dedupes on, and later the same key the Calendly webhook
+        // will carry — so a client signal and a webhook for one booking
+        // reconcile to a single row rather than two.
+        const uri =
+          (e.data && e.data.payload && e.data.payload.event && e.data.payload.event.uri) || null;
+        markBooked(uri);
         trackEvent("contact_sales_call_booked", { method: "inline", plan: plan || "elite" });
       }
+
     };
     window.addEventListener("message", onMessage);
     return () => window.removeEventListener("message", onMessage);
@@ -1449,7 +1510,9 @@ function ContactSalesForm({ onClose, plan = "", open = false }) {
       <div className="cs-success-head">
         <span className="cs-tick" aria-hidden="true">✅</span>
         <h3 className="cs-success-title">
-          Enquiry received. Grab a time now, or close and we&rsquo;ll call you.
+          {booked
+            ? "You’re booked — see you then."
+            : "Enquiry received. Grab a time now, or close and we’ll call you."}
         </h3>
       </div>
 
@@ -1511,7 +1574,8 @@ function ContactSalesForm({ onClose, plan = "", open = false }) {
 
       {done && onClose && (
         <button type="button" className="cs-book-secondary cs-book-secondary-below" onClick={onClose}>
-          Close, I&rsquo;ll wait for your call.
+          {/* Once a meeting exists, “I’ll wait for your call” is no longer true. */}
+          {booked ? "Close" : "Close, I’ll wait for your call."}
         </button>
       )}
     </div>

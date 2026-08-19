@@ -85,6 +85,14 @@ async function reachSuccess({ viewport, isMobile, hasTouch }, consent, calendly)
     await page.addInitScript(([k, v]) => { try { localStorage.setItem(k, v); } catch {} },
       ['mbp_cookie_consent', consent]);
   }
+  // The booked flag is best-effort client-side signalling; stub it so a check
+  // never marks a real lead, and record the bodies so we can assert exactly one
+  // POST per booking.
+  const bookedPosts = [];
+  await page.route('**/api/sales-lead/booked', (r) => {
+    try { bookedPosts.push(JSON.parse(r.request().postData() || '{}')); } catch { bookedPosts.push({ unparsable: true }); }
+    return r.fulfill({ status: 200, contentType: 'application/json', body: '{"ok":true}' });
+  });
   await page.route('**/api/sales-lead', (r) =>
     r.fulfill({ status: 200, contentType: 'application/json', body: '{"success":true}' }));
   await page.route('**/assets.calendly.com/**', (r) => {
@@ -119,7 +127,7 @@ async function reachSuccess({ viewport, isMobile, hasTouch }, consent, calendly)
   await submit.scrollIntoViewIfNeeded();
   await submit.click({ timeout: 15000 });
   await page.waitForSelector('.cs-success', { timeout: 15000 });
-  return { ctx, page, cdnHits };
+  return { ctx, page, cdnHits, bookedPosts };
 }
 
 const dl = (page, event) =>
@@ -173,6 +181,51 @@ for (const vp of VIEWPORTS) {
     rec(`${vp.label}: calendly.event_scheduled pushes contact_sales_call_booked`, real.length === 1);
     await ctx.close();
   }
+
+  // ── 1b. Booked state: copy flips, and the lead is flagged exactly once ─────
+  {
+    const { ctx, page, bookedPosts } = await reachSuccess(vp, 'all', 'ok');
+    await page.waitForSelector(`${EMBED} iframe`, { timeout: 10000 }).catch(() => {});
+
+    // Calendly announces the booking. Dispatched with calendly.com as the
+    // origin, because that is the only origin our handler trusts.
+    const fireScheduled = () => page.evaluate(() => {
+      window.dispatchEvent(new MessageEvent('message', {
+        origin: 'https://calendly.com',
+        data: { event: 'calendly.event_scheduled', payload: { event: { uri: 'https://api.calendly.com/scheduled_events/EVT123' } } },
+      }));
+    });
+
+    await fireScheduled();
+    await page.waitForTimeout(600);
+
+    rec(`${vp.label}: booked header replaces the prompt`,
+      (await page.locator('.cs-success-title').innerText()).trim() === 'You’re booked — see you then.',
+      (await page.locator('.cs-success-title').innerText()).trim());
+    rec(`${vp.label}: secondary link becomes plain Close`,
+      (await page.locator(SECONDARY).innerText()).trim() === 'Close',
+      (await page.locator(SECONDARY).innerText()).trim());
+
+    rec(`${vp.label}: one POST to /api/sales-lead/booked`, bookedPosts.length === 1,
+      `${bookedPosts.length} post(s)`);
+    if (bookedPosts.length) {
+      const b = bookedPosts[0];
+      rec(`${vp.label}: POST body carries email, booked and event_uri`,
+        b.business_email === 'success.check@example.com' && b.booked === true &&
+        b.event_uri === 'https://api.calendly.com/scheduled_events/EVT123',
+        JSON.stringify(b));
+    }
+
+    // A repeated event_scheduled for the SAME booking must not post again —
+    // Calendly can and does repeat these.
+    await fireScheduled();
+    await page.waitForTimeout(600);
+    rec(`${vp.label}: a repeated event_scheduled does not post twice`, bookedPosts.length === 1,
+      `${bookedPosts.length} post(s)`);
+
+    await ctx.close();
+  }
+
 
   // ── 2. Stalled iframe → 6s timeout flips to the button ────────────────────
   {
