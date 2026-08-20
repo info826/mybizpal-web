@@ -637,6 +637,9 @@ textarea.form-input{min-height:88px;resize:vertical;font-family:'Manrope',sans-s
 @keyframes sofiBounce{0%,60%,100%{transform:translateY(0);opacity:.4}30%{transform:translateY(-6px);opacity:1}}
 .sofi-handoff{background:rgba(0,212,255,0.06);border:1px solid rgba(0,212,255,0.18);border-radius:12px;padding:13px 15px;margin:0 14px 4px;text-align:center}
 .sofi-handoff p{font-size:12px;color:#A1A1A6;margin-bottom:9px;line-height:1.5}
+.sofi-handoff-dismiss{display:block;margin:9px auto 0;background:none;border:none;color:#8A8A8F;font-family:'Manrope',sans-serif;font-size:12px;cursor:pointer;text-decoration:underline;text-underline-offset:3px;padding:2px 6px;border-radius:6px}
+.sofi-handoff-dismiss:hover{color:#F5F5F7}
+.sofi-handoff-dismiss:focus-visible{outline:2px solid #00D4FF;outline-offset:2px}
 .sofi-wa-btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:10px;border-radius:100px;background:linear-gradient(135deg,#25D366,#128C7E);color:#fff;border:none;font-family:'Manrope',sans-serif;font-size:13px;font-weight:700;cursor:pointer;transition:opacity .2s;text-decoration:none}
 .sofi-wa-btn:hover{opacity:.88}
 .sofi-input-row{display:flex;gap:8px;padding:11px 14px;border-top:1px solid rgba(255,255,255,0.06)}
@@ -1955,11 +1958,26 @@ function SofiWidget() {
         newCtx.pain = userMsg;
         qual.pain = userMsg;
         reply = `${ack}That's exactly what MyBizPal fixes, usually within the first week.\n\nLast one: roughly how many calls or enquiries do you get a week?`;
-      } else if (count >= 3) {
+      } else if (count === 3) {
         newCtx.volume = userMsg;
         qual.volume = userMsg;
-        reply = `${ack}Perfect, I have everything I need! 👌\n\nLet's carry on over WhatsApp and I'll show you exactly what Sofi can do for your business.`;
+        reply = `${ack}Perfect, I have everything I need! 👌\n\nWant to carry on over WhatsApp? I can show you exactly what Sofi does for a business like yours.`;
         triggerHandoff = true;
+      } else {
+        // PAST THE SCRIPT. This panel is a scripted question tree, not Sofi's
+        // engine, and it has nothing left to say that would be true. So it says
+        // that, rather than performing comprehension it does not have.
+        //
+        // The register matters: no 'I see', no 'got it', nothing implying the
+        // message was understood. It is honest about being a note-taker, and
+        // everything typed here is still appended to the widget session, so
+        // nothing the visitor says is lost — sendMessage() logs the user turn
+        // before this runs, and the reply is logged below like any other.
+        newCtx.extra = [...(ctx.extra || []), userMsg];
+        qual.extra_notes = newCtx.extra.join(' | ');
+        reply = count === 4
+          ? "I'll pick this up properly on WhatsApp — anything else you want me to note?"
+          : "Noted — I'll bring that across with me.";
       }
 
       setContext(newCtx);
@@ -2150,14 +2168,29 @@ function SofiWidget() {
 
           {showHandoff && (
             <div className="sofi-handoff">
-              <p>Let's continue on WhatsApp, I'll be right there 💬</p>
+              <p>Happy to carry on here — or continue on WhatsApp and I'll be right there 💬</p>
               <a className="sofi-wa-btn" href={waUrl} target="_blank" rel="noreferrer">
                 {waIconSvg} Continue on WhatsApp →
               </a>
+              {/* Offered ONCE. Dismissing leaves the conversation exactly where
+                  it is, and the header bar link remains for anyone who changes
+                  their mind. */}
+              <button
+                type="button"
+                className="sofi-handoff-dismiss"
+                onClick={() => setShowHandoff(false)}
+              >
+                No thanks, I&rsquo;ll stay here
+              </button>
             </div>
           )}
 
-          {!showHandoff && (
+          {/* The input is ALWAYS here. It used to be removed the moment the
+              handoff card appeared, which made WhatsApp the only exit from a
+              conversation the visitor had not chosen to end. WhatsApp is an
+              offer now: it is made once, it stays reachable in the header bar,
+              and declining it simply means carrying on here. */}
+          {(
             <div className="sofi-input-row">
               <input ref={inputRef} className="sofi-input" placeholder="Type your answer..."
                 value={input} onChange={e => setInput(e.target.value)}
