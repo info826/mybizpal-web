@@ -614,7 +614,11 @@ textarea.form-input{min-height:88px;resize:vertical;font-family:'Manrope',sans-s
 .sofi-panel{position:fixed;bottom:100px;right:28px;z-index:499;width:340px;background:#0d0d1a;border:1px solid rgba(255,255,255,0.1);border-radius:20px;overflow:hidden;box-shadow:0 24px 80px rgba(0,0,0,0.6);display:flex;flex-direction:column;animation:panelIn .25s cubic-bezier(.34,1.4,.64,1) both}
 @keyframes panelIn{from{opacity:0;transform:translateY(14px) scale(.97)}to{opacity:1;transform:translateY(0) scale(1)}}
 .sofi-panel-header{background:linear-gradient(135deg,#0d0d1a,#111126);border-bottom:1px solid rgba(0,212,255,0.2);padding:16px 18px;display:flex;align-items:center;gap:12px}
-.sofi-avatar{width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+/* Matches the launcher: 38px circle, 2px brand-gradient ring painted in the
+   border box with the panel colour over it. box-sizing is border-box globally,
+   so the ring eats inward and the header layout does not move. */
+.sofi-avatar{width:38px;height:38px;border-radius:50%;background-image:linear-gradient(#0d0d1a,#0d0d1a),linear-gradient(135deg,#00D4FF,#7B2FFF,#4060FF);background-origin:border-box;background-clip:padding-box,border-box;border:2px solid transparent;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;overflow:hidden}
+.sofi-avatar-img{width:100%;height:100%;object-fit:cover;border-radius:50%;display:block}
 .sofi-header-text h4{font-size:14px;font-weight:700;color:#fff;margin-bottom:1px}
 .sofi-header-text p{font-size:11px;color:rgba(255,255,255,0.75)}
 .sofi-close{margin-left:auto;background:rgba(255,255,255,0.15);border:none;color:#fff;width:28px;height:28px;border-radius:50%;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-family:'Manrope',sans-serif}
@@ -2036,10 +2040,16 @@ function SofiWidget() {
       {open && (
         <div style={panelStyle}>
           <div className="sofi-panel-header">
-            <div className="sofi-avatar" style={{ color: "#fff" }}>{waIconSvg}</div>
+            {/* Sofi's own face, not WhatsApp's logo. WhatsApp is a place you can
+                continue the conversation; it is not who you are talking to, and
+                putting its glyph here made the transport the identity. Same
+                Cloudinary still as the launcher, same circular treatment. */}
+            <div className="sofi-avatar">
+              <img className="sofi-avatar-img" src={SOFI_AVATAR_POSTER} alt="" width="38" height="38" decoding="async" />
+            </div>
             <div className="sofi-header-text">
-              <h4>Sofi · MyBizPal AI</h4>
-              <p>● Online · WhatsApp powered</p>
+              <h4>Sofi</h4>
+              <p>● Online · from MyBizPal</p>
             </div>
             <button className="sofi-close" onClick={() => setOpen(false)}>✕</button>
           </div>
