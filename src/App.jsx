@@ -1655,8 +1655,16 @@ function RevenueCalculator({ onOpenModal }) {
 // evidence trail) and returns the session_ref used as the WhatsApp
 // handover token. Every backend call fails soft: the chat keeps working
 // and the WhatsApp link falls back to a ref-less pre-fill.
-const SOFI_OPENING =
-  "Hi! 👋 I'm Sofi, MyBizPal's AI assistant. I answer calls, reply on WhatsApp and book appointments for UK businesses, 24/7.\n\nWhat kind of business do you run?";
+// Two messages, not one pasted block. The greeting carries the Article 50
+// disclosure and nothing else — the feature list that used to be bolted onto
+// it made the first thing Sofi ever said a brochure. The question follows
+// after a typing pause, which is how a person opens a conversation.
+//
+// SOFI_GREETING MUST REMAIN THE FIRST MESSAGE: it is the Art. 50 AI
+// disclosure, and createSession() logs that disclosure server-side at the
+// moment it is shown. Do not reorder these.
+const SOFI_GREETING = "Hi! 👋 I'm Sofi, MyBizPal's AI assistant.";
+const SOFI_OPENING_QUESTION = "What kind of business do you run?";
 
 const EMAIL_RE = /[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/;
 // No /i flag: the optional second word (surname) must be Capitalised, or
@@ -1835,7 +1843,7 @@ function SofiWidget() {
       const res = await fetch(`${API_URL}/api/widget-session`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ first_message: SOFI_OPENING, page_url: window.location.href }),
+        body: JSON.stringify({ first_message: SOFI_GREETING, page_url: window.location.href }),
       });
       if (!res.ok) throw new Error(`create ${res.status}`);
       const data = await res.json();
@@ -1864,6 +1872,43 @@ function SofiWidget() {
     }
     return found;
   };
+
+  // Deliver several bubbles in sequence with a typing indicator between them.
+  // A wall of text arriving instantly is the tell that nobody is there.
+  //
+  // The pause scales with how much there is to read but is CAPPED: a long
+  // paragraph must never make the visitor wait proportionally longer, because
+  // slow reads as broken far sooner than fast reads as robotic.
+  const bubbleDelay = (text) => Math.min(320 + String(text).length * 9, 900);
+
+  // Multi-sentence replies are authored with blank lines between their parts,
+  // which is exactly where a person would pause. Split there, keep everything
+  // else intact (the 1234 menu stays one bubble, as it should).
+  const splitBubbles = (text) =>
+    String(text).split(/\n\s*\n/).map((t) => t.trim()).filter(Boolean);
+
+  // Appends each part in turn. Returns a promise so callers can chain, and
+  // logs every part to the widget session exactly as before.
+  const sayInSequence = (parts, qual = {}) =>
+    parts.reduce(
+      (chain, part, i) =>
+        chain.then(
+          () =>
+            new Promise((resolve) => {
+              if (i > 0) setTyping(true);
+              setTimeout(
+                () => {
+                  setTyping(false);
+                  setMessages((prev) => [...prev, { from: 'sofi', text: part }]);
+                  queueForSession([{ from: 'sofi', text: part }], i === 0 ? qual : {});
+                  resolve();
+                },
+                i === 0 ? 0 : bubbleDelay(part)
+              );
+            })
+        ),
+      Promise.resolve()
+    );
 
   const sofiReply = (userMsg, count, ctx) => {
     setTyping(true);
@@ -1898,10 +1943,14 @@ function SofiWidget() {
       }
 
       setContext(newCtx);
-      setMessages(prev => [...prev, { from: "sofi", text: reply }]);
-      queueForSession([{ from: "sofi", text: reply }], qual);
 
-      if (triggerHandoff) setTimeout(() => setShowHandoff(true), 400);
+      // One bubble per authored part, with a typing beat between them, instead
+      // of a paragraph landing in a single block. The handoff card waits until
+      // the last bubble has arrived — offering to move the conversation before
+      // finishing the sentence is the sort of thing only software does.
+      sayInSequence(splitBubbles(reply), qual).then(() => {
+        if (triggerHandoff) setTimeout(() => setShowHandoff(true), 400);
+      });
     }, 800 + Math.random() * 500);
   };
 
@@ -1930,8 +1979,15 @@ function SofiWidget() {
           setTyping(false);
           // Art. 50 disclosure is this first message; creating the session
           // logs the disclosure event server-side at the same moment.
-          setMessages([{ from: "sofi", text: SOFI_OPENING }]);
+          setMessages([{ from: "sofi", text: SOFI_GREETING }]);
           createSession();
+          // Then the question, after a beat, as a second bubble.
+          setTyping(true);
+          setTimeout(() => {
+            setTyping(false);
+            setMessages((prev) => [...prev, { from: "sofi", text: SOFI_OPENING_QUESTION }]);
+            queueForSession([{ from: "sofi", text: SOFI_OPENING_QUESTION }]);
+          }, bubbleDelay(SOFI_OPENING_QUESTION));
         }, 900);
       }, 300);
     }
