@@ -1024,6 +1024,26 @@ const CALENDLY_MIN_SANE_HEIGHT = 200;
 // treated as unavailable.
 const CALENDLY_UNAVAILABLE_TIMEOUT_MS = 8000;
 
+// The reassurance line names the plan the visitor actually clicked. It said
+// "Elite" to everyone, including the people who came in from Bespoke — the one
+// audience most likely to notice being addressed as a smaller customer.
+//
+// A MAP, not the raw key: `plan` carries internal identifiers, and "exclusive"
+// must never reach the screen. Anything unrecognised falls back to the neutral
+// wording rather than printing whatever it was handed.
+// Object.create(null): a plain literal inherits __proto__ and constructor, and
+// PLAN_LABELS['__proto__'] is truthy — it would put '[object Object]' on the
+// screen, and 'constructor' would print function source. Not reachable from our
+// own pricing data, but this line exists to guarantee the raw value never
+// reaches the screen, and a guarantee with a known hole is not one.
+const PLAN_LABELS = Object.assign(Object.create(null), { elite: 'Elite', exclusive: 'Bespoke' });
+const planLabel = (plan) => PLAN_LABELS[String(plan || '').trim().toLowerCase()] || null;
+const planReassurance = (plan) => {
+  const label = planLabel(plan);
+  return label ? `\u{1F512} We'll only use this to discuss your ${label} plan.`
+               : "\u{1F512} We'll only use this to discuss your plan.";
+};
+
 function ContactSalesForm({ onClose, plan = "", open = false }) {
   const [step, setStep] = useState(1);
   const [f, setF] = useState({
@@ -1414,7 +1434,7 @@ function ContactSalesForm({ onClose, plan = "", open = false }) {
             {errs.businessEmail && <div className="field-err">{errs.businessEmail}</div>}
           </div>
           <button className="form-submit" onClick={next} disabled={!step1Valid}>Next →</button>
-          <p className="form-note">🔒 We'll only use this to discuss your Elite plan.</p>
+          <p className="form-note">{planReassurance(plan)}</p>
         </div>
       )}
 
@@ -2652,7 +2672,7 @@ export default function App() {
               <button
                 className={p.contactSales ? "p-btn-prem" : "p-btn-grad"}
                 onClick={() => {
-                  if (p.contactSales) { openSales(p.salesPlan || ""); return; }
+                  if (p.contactSales) { openSales(p.salesPlan || p.key || ""); return; }
                   const billingParam = billing === "yearly" ? "annual" : "monthly";
                   window.location.href = `https://app.mybizpal.ai/signup?plan=${p.key}&billing=${billingParam}`;
                 }}
