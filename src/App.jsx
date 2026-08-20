@@ -80,7 +80,7 @@ const PLANS = [
   },
   {
     key:"exclusive",tier:"Exclusive",tagline:"Built entirely around you.",
-    featured:false,contactSales:true,salesPlan:"exclusive",badge:"✦ Bespoke",desktopOrder:1,mobileOrder:4,cta:"Contact Sales",
+    featured:false,contactSales:true,salesPlan:"exclusive",badge:"✦ Exclusive",desktopOrder:1,mobileOrder:4,cta:"Contact Sales",
     roi:"Less than a quarter the cost of one SDR (£50k+/yr).",
     features:["White-label","Multi-location","Voice cloning / custom voice","Bespoke integrations","White-glove onboarding + SLA",{from:"Everything in Elite"},"Outbound campaigns at scale","Full CRM integrations","Closer briefings","Advanced analytics","Multilingual","Dedicated account manager","Done-for-you onboarding",{from:"Everything in Pro & Starter"},"Outbound calling & lead qualification","SMS, email & Slack integration","1 CRM integration","Unlimited calling (fair use)","Inbound call answering","WhatsApp conversations","Google Calendar booking","FAQ & customer service","Call transcripts","Basic analytics","500 voice minutes/mo (unlimited WhatsApp, fair use)"],
     locked:null,
@@ -1028,8 +1028,13 @@ const CALENDLY_MIN_SANE_HEIGHT = 200;
 const CALENDLY_UNAVAILABLE_TIMEOUT_MS = 8000;
 
 // The reassurance line names the plan the visitor actually clicked. It said
-// "Elite" to everyone, including the people who came in from Bespoke — the one
-// audience most likely to notice being addressed as a smaller customer.
+// "Elite" to everyone, including the people who came in from Exclusive — the
+// one audience most likely to notice being addressed as a smaller customer.
+//
+// ONE TIER, ONE NAME. The tier is called Exclusive; "bespoke" is a descriptor
+// of what it is, not what it is called, so it stays in prose ("bespoke build",
+// "Bespoke integrations") and never appears as the name. The badge, the tier
+// field and this map must agree, and check:chat pins that they do.
 //
 // A MAP, not the raw key: `plan` carries internal identifiers, and "exclusive"
 // must never reach the screen. Anything unrecognised falls back to the neutral
@@ -1039,7 +1044,7 @@ const CALENDLY_UNAVAILABLE_TIMEOUT_MS = 8000;
 // screen, and 'constructor' would print function source. Not reachable from our
 // own pricing data, but this line exists to guarantee the raw value never
 // reaches the screen, and a guarantee with a known hole is not one.
-const PLAN_LABELS = Object.assign(Object.create(null), { elite: 'Elite', exclusive: 'Bespoke' });
+const PLAN_LABELS = Object.assign(Object.create(null), { elite: 'Elite', exclusive: 'Exclusive' });
 const planLabel = (plan) => PLAN_LABELS[String(plan || '').trim().toLowerCase()] || null;
 const planReassurance = (plan) => {
   const label = planLabel(plan);

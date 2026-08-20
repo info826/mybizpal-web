@@ -163,8 +163,32 @@ const waitForBubbles = async (page, n, timeout = 12000) => {
   };
 
   const bespoke = await openCard(/^exclusive$/i);
-  rec('opened from Bespoke, the line says Bespoke', /your Bespoke plan/.test(bespoke), bespoke);
-  rec('the raw internal key never reaches the screen', !/exclusive/i.test(bespoke), bespoke);
+  rec('opened from the Exclusive card, the line says Exclusive', /your Exclusive plan/.test(bespoke), bespoke);
+  // The label and the raw key are now the same word for this tier, so the only
+  // thing distinguishing "we used the map" from "we printed req.body" is
+  // capitalisation: the key is lowercase 'exclusive', the label is 'Exclusive'.
+  // Weaker than it was, and said so rather than dropped.
+  rec('the mapped label is displayed, not the raw lowercase key',
+    /your Exclusive plan/.test(bespoke) && !/your exclusive plan/.test(bespoke), bespoke);
+
+  // PIN: one tier, one name. The badge, the tier field and the reassurance line
+  // must all say Exclusive. Any two of them agreeing while the third drifts is
+  // exactly how the card ended up calling itself Bespoke while the form called
+  // it Elite.
+  const exclusiveCard = page.locator('.p-card').filter({ has: page.locator('.p-tier', { hasText: /^exclusive$/i }) });
+  const exTier = (await exclusiveCard.locator('.p-tier').innerText()).trim();
+  const exBadge = (await exclusiveCard.locator('.p-tier-badge').innerText()).trim();
+  rec('tier and badge agree on the name',
+    /^exclusive$/i.test(exTier) && /exclusive/i.test(exBadge) && !/bespoke/i.test(exBadge),
+    `tier "${exTier}" / badge "${exBadge}"`);
+  rec('the reassurance line agrees with them',
+    /your Exclusive plan/.test(bespoke) && !/bespoke/i.test(bespoke), bespoke);
+
+  // The descriptor must SURVIVE the rename — 'bespoke' is still the right word
+  // for what the tier does, just not its name.
+  const featureText = (await exclusiveCard.innerText());
+  rec('"bespoke" survives as a descriptor in the card copy',
+    /bespoke/i.test(featureText));
 
   const elite = await openCard(/^elite$/i);
   rec('opened from Elite, the line says Elite', /your Elite plan/.test(elite), elite);
